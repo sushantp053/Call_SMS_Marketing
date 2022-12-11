@@ -15,26 +15,35 @@ class CallReciever : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
 
         if (intent?.getStringExtra(TelephonyManager.EXTRA_STATE) == TelephonyManager.EXTRA_STATE_OFFHOOK) {
-            showToastMsg(context!!, "Deecto Phone Call Started" + intent?.dataString)
+//            showToastMsg(context!!, "Deecto Phone Call Started" + intent?.dataString)
         } else if (intent?.getStringExtra(TelephonyManager.EXTRA_STATE) == TelephonyManager.EXTRA_STATE_IDLE) {
-            showToastMsg(context!!, "Deecto Phone Call Ended")
+//            showToastMsg(context!!, "Deecto Phone Call Ended")
         }
         else if (intent?.getStringExtra(TelephonyManager.EXTRA_STATE) == TelephonyManager.EXTRA_STATE_RINGING) {
             val number: String =
                 intent!!.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER).toString()
-            showToastMsg(context!!, "Deecto Incoming Call $number")
+//            showToastMsg(context!!, "Deecto Incoming Call $number")
             try {
+                if(number.length < 10) {
+                    Log.e("Error Length", "Length matched")
 
-                val smsManager: SmsManager = SmsManager.getDefault()
-                // on below line we are sending text message.
-                smsManager.sendTextMessage(
-                    number,
-                    null,
-                    "Thank You for calling Sushant we will get back to you soon.",
-                    null,
-                    null
-                )
-                Toast.makeText(context, "Message Sent", Toast.LENGTH_LONG).show()
+                    showToastMsg(context!!, "Length matched $number")
+                    if (number.subSequence(0, 2).equals("+91")) {
+
+                        Log.e("Error Code", "Code Matched")
+                        showToastMsg(context!!, "Code Matched $number")
+                            val smsManager: SmsManager = SmsManager.getDefault()
+                            // on below line we are sending text message.
+                            smsManager.sendTextMessage(
+                                number,
+                                null,
+                                "Thank You for calling Sushant we will get back to you soon.",
+                                null,
+                                null
+                            )
+                            Toast.makeText(context, "Message Sent", Toast.LENGTH_LONG).show()
+                    }
+                }
 
             } catch (e: Exception) {
 

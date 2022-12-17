@@ -11,7 +11,4 @@ data class Message(
     @ColumnInfo(name = "message") var message: String?,
     @ColumnInfo(name = "created_at") var created_at: String?,
     @ColumnInfo(name = "status") var status: Boolean?,
-
-
-
-    )
+    ): java.io.Serializable

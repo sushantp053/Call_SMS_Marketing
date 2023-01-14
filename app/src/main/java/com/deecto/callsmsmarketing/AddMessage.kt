@@ -16,7 +16,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class AddMessage : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding
 
     private lateinit var message: Message
     private lateinit var old_message : Message

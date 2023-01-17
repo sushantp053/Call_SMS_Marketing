@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "923916624680",
+    "project_id": "auto-sms-41e89",
+    "storage_bucket": "auto-sms-41e89.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:923916624680:android:55704b01db5137f532661d",
+        "android_client_info": {
+          "package_name": "com.deecto.callsmsmarketing"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "923916624680-anptd772l8jbpes8i5kc926pc84ur850.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBf2B0DHpkkh86HTFm6wH1t8aMZJhfylcQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "923916624680-anptd772l8jbpes8i5kc926pc84ur850.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

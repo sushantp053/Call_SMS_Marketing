@@ -90,6 +90,8 @@ class MessageActivity : AppCompatActivity(), MessageAdapter.MessageItemClickList
     }
 
     override fun onDeleteClicked(message: Message) {
+
+        Toast.makeText(this, "Delete Clicked", Toast.LENGTH_SHORT).show()
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Delete")
         builder.setMessage("Do you really want to delete this message")
@@ -104,13 +106,18 @@ class MessageActivity : AppCompatActivity(), MessageAdapter.MessageItemClickList
             dialog.dismiss()
         }
         builder.show()
-
     }
 
     override fun onEditClicked(message: Message) {
+        Toast.makeText(this, "Edit Button Clicked", Toast.LENGTH_SHORT).show()
         val intent = Intent(this, AddMessage::class.java)
         intent.putExtra("current_message", message)
         updateMessage.launch(intent)
+    }
+
+    override fun onSwitchClicked(message: Message) {
+        Toast.makeText(this, "Switch Clicked", Toast.LENGTH_SHORT).show()
+        viewModel.updateStatus(message)
     }
 
     override fun onLongItemClicked(
@@ -132,7 +139,22 @@ class MessageActivity : AppCompatActivity(), MessageAdapter.MessageItemClickList
     override fun onMenuItemClick(item: MenuItem?): Boolean {
         if (item?.itemId == R.id.delete_message) {
 
-            viewModel.deleteMessage(selectedMessage)
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle("Delete")
+            builder.setMessage("Do you really want to delete this message")
+            builder.setPositiveButton(R.string.delete) { dialog, which ->
+                viewModel.deleteMessage(selectedMessage)
+                dialog.dismiss()
+            }
+
+            builder.setNegativeButton(android.R.string.no) { dialog, which ->
+                Toast.makeText(
+                    applicationContext,
+                    android.R.string.no, Toast.LENGTH_SHORT
+                ).show()
+                dialog.dismiss()
+            }
+            builder.show()
             return true
         }
         if (item?.itemId == R.id.edit_message) {

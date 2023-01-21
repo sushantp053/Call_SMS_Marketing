@@ -9,7 +9,6 @@ class MessageRepository(private val messageDao: MessageDao) {
     suspend fun insert(message: Message){
         messageDao.insert(message)
     }
-
     suspend fun delete(message: Message){
         messageDao.delete(message)
     }
@@ -17,4 +16,8 @@ class MessageRepository(private val messageDao: MessageDao) {
         messageDao.update(message.id,message.title, message.message, message.status)
     }
 
+    suspend fun updateStatus( message: Message){
+        messageDao.updateAllStatus(false)
+        messageDao.updateCurrentStatus(true, message.id)
+    }
 }

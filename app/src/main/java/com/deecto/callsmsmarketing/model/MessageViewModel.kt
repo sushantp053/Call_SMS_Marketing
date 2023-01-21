@@ -24,6 +24,10 @@ class MessageViewModel(application: Application) : AndroidViewModel(application)
 
         repository.delete(message)
     }
+    fun updateStatus(message: Message) = viewModelScope.launch(Dispatchers.IO) {
+
+        repository.updateStatus(message)
+    }
     fun insertMessage(message:Message?) = viewModelScope.launch(Dispatchers.IO) {
 
         message?.let { repository.insert(it) }

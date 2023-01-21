@@ -47,7 +47,7 @@ class AddMessage : AppCompatActivity() {
                        old_message.id,title, msg,formater.format(Date()),old_message.status
                    )
                 }else{
-                    message = Message(null, title,msg, formater.format(Date()), false)
+                    message = Message(null, title,msg, formater.format(Date()), true)
                 }
                 val intent = Intent()
 

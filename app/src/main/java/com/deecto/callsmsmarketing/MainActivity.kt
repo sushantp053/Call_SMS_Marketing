@@ -1,30 +1,21 @@
 package com.deecto.callsmsmarketing
 
 import android.Manifest
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.view.MenuItem
-import android.widget.LinearLayout
-import android.widget.PopupMenu
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
-import androidx.cardview.widget.CardView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import com.deecto.callsmsmarketing.Adapter.MessageAdapter
+import com.deecto.callsmsmarketing.database.DaySMSCounterDao
 import com.deecto.callsmsmarketing.database.MessageDao
 import com.deecto.callsmsmarketing.database.MessageDatabase
 import com.deecto.callsmsmarketing.databinding.ActivityMainBinding
-import com.deecto.callsmsmarketing.model.Message
-import com.deecto.callsmsmarketing.model.MessageViewModel
+import com.deecto.callsmsmarketing.model.DaySMSCounter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -32,6 +23,8 @@ import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class MainActivity : AppCompatActivity() {
 
@@ -54,21 +47,57 @@ class MainActivity : AppCompatActivity() {
 
         CoroutineScope(Dispatchers.Default).launch {
             var messageDio: MessageDao = database.getMessageDao()
-            var msg  = messageDio.getDefaultMessage(true)
+            var msg = messageDio.getDefaultMessage(true)
             try {
                 textViewCurrentMsg.text = msg.message
-            }
-            catch (e : Exception){
+            } catch (e: Exception) {
                 Log.e("set text error", e.toString())
             }
         }
+        CoroutineScope(Dispatchers.Default).launch {
+            val current = LocalDateTime.now()
+            val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+            val formattedDate = current.format(formatter)
+                var daySMSCounterDao: DaySMSCounterDao = database.getDaySMSCounterDao()
+                try {
+                    val dayDetails = daySMSCounterDao.getDayCount(formattedDate)
+                    val totalCount = daySMSCounterDao.getTotalCount()
 
-        val sharedPref = this?.getPreferences(Context.MODE_PRIVATE) ?: return
+                    totalSmsCount.text = totalCount.toString()
+                    dailySmsCount.text = dayDetails.counter.toString()
+
+                } catch (e: Exception) {
+                    Log.e("Set Count Error", e.toString())
+                    dailySmsCount.text = "0"
+                    var daySMSCounter: DaySMSCounter = DaySMSCounter(null, formattedDate.toString(), 0)
+                    daySMSCounterDao.insert(
+                        daySMSCounter
+                    )
+                }
+        }
+
+        val sharedPref = this.getSharedPreferences("Call", Context.MODE_PRIVATE) ?: return
         val dailySms = sharedPref.getBoolean("daily", false)
+        val incoming = sharedPref.getBoolean("incoming", false)
+        val outgoing = sharedPref.getBoolean("outgoing", false)
         dailyOne.isChecked = dailySms
+        incomingCallSwitch.isChecked = incoming
+        outGoingCallSwitch.isChecked = outgoing
         dailyOne.setOnCheckedChangeListener { buttonView, isChecked ->
             with(sharedPref.edit()) {
                 putBoolean("daily", isChecked)
+                apply()
+            }
+        }
+        incomingCallSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            with(sharedPref.edit()) {
+                putBoolean("incoming", isChecked)
+                apply()
+            }
+        }
+        outGoingCallSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+            with(sharedPref.edit()) {
+                putBoolean("outgoing", isChecked)
                 apply()
             }
         }
@@ -119,13 +148,15 @@ class MainActivity : AppCompatActivity() {
             val builder = AlertDialog.Builder(this)
             builder.setTitle("Sign Out")
             builder.setMessage("Do you really want to Sign Out. To Use app you need to Login.")
-            builder.setPositiveButton(R.string.delete) {dialog, which ->
+            builder.setPositiveButton("Sign Out") { dialog, which ->
                 auth.signOut()
                 dialog.dismiss()
             }
             builder.setNegativeButton(android.R.string.no) { dialog, which ->
-                Toast.makeText(applicationContext,
-                    android.R.string.no, Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    applicationContext,
+                    android.R.string.no, Toast.LENGTH_SHORT
+                ).show()
                 dialog.dismiss()
             }
             builder.show()

@@ -1,23 +1,23 @@
 package com.deecto.callsmsmarketing
 
 import android.Manifest
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import com.deecto.callsmsmarketing.database.DaySMSCounterDao
 import com.deecto.callsmsmarketing.database.MessageDao
 import com.deecto.callsmsmarketing.database.MessageDatabase
 import com.deecto.callsmsmarketing.databinding.ActivityMainBinding
 import com.deecto.callsmsmarketing.model.DaySMSCounter
+import com.deecto.callsmsmarketing.services.ManagePermissions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.CoroutineScope
@@ -31,16 +31,23 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var auth: FirebaseAuth
     private lateinit var database: MessageDatabase
+    private val permissionsRequestCode = 123
+    private lateinit var managePermissions: ManagePermissions
+    private val db = Firebase.firestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
         auth = Firebase.auth
         if (auth.currentUser == null) {
             startActivity(Intent(this, Login::class.java))
             finish()
+        }else{
+            checkUserData()
         }
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
         database = MessageDatabase.getDatabase(this)
 
@@ -83,7 +90,7 @@ class MainActivity : AppCompatActivity() {
         dailyOne.isChecked = dailySms
         incomingCallSwitch.isChecked = incoming
         outGoingCallSwitch.isChecked = outgoing
-        dailyOne.setOnCheckedChangeListener { buttonView, isChecked ->
+        dailyOne.setOnCheckedChangeListener { _, isChecked ->
             with(sharedPref.edit()) {
                 putBoolean("daily", isChecked)
                 apply()
@@ -101,48 +108,21 @@ class MainActivity : AppCompatActivity() {
                 apply()
             }
         }
+        val list = listOf<String>(
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.READ_CALL_LOG,
+            Manifest.permission.SEND_SMS
+        )
+        // Initialize a new instance of ManagePermissions class
+        managePermissions = ManagePermissions(this,list,permissionsRequestCode)
 
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.READ_PHONE_STATE
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.READ_PHONE_STATE),
-                963
-            )
-        }
+        managePermissions.checkPermissions()
 
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.READ_CALL_LOG
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.READ_CALL_LOG),
-                111
-            )
-        }
-
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.SEND_SMS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.SEND_SMS),
-                977
-            )
-        }
         changeMessageCard.setOnClickListener {
             val i = Intent(
                 this,
                 MessageActivity::class.java
             )
-            startActivity(i)
         }
         logoutCard.setOnClickListener {
             val builder = AlertDialog.Builder(this)
@@ -150,6 +130,8 @@ class MainActivity : AppCompatActivity() {
             builder.setMessage("Do you really want to Sign Out. To Use app you need to Login.")
             builder.setPositiveButton("Sign Out") { dialog, which ->
                 auth.signOut()
+                startActivity(Intent(this, Login::class.java))
+                finish()
                 dialog.dismiss()
             }
             builder.setNegativeButton(android.R.string.no) { dialog, which ->
@@ -162,6 +144,28 @@ class MainActivity : AppCompatActivity() {
             builder.show()
 
         }
+    }
+
+    private fun checkUserData(){
+
+        Log.e(ContentValues.TAG, "Checking User Data")
+        val docRef = db.collection("users").document(auth.uid.toString())
+        docRef.get()
+            .addOnSuccessListener { document ->
+                if (document.data != null) {
+                    Log.e(ContentValues.TAG, "DocumentSnapshot data: ${document.data}")
+
+
+                } else {
+                    Log.e(ContentValues.TAG, "No such document")
+//                                    RegisterUser
+                    startActivity(Intent(this, RegisterUser::class.java))
+                    finish()
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.d(ContentValues.TAG, "get failed with ", exception)
+            }
     }
 }
 

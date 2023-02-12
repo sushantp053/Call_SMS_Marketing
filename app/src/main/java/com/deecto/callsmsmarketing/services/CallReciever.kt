@@ -35,42 +35,49 @@ class CallReciever : BroadcastReceiver() {
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onReceive(context: Context?, intent: Intent?) {
         auth = Firebase.auth
+        if (auth.currentUser != null) {
+            context?.let { showToastMsg(it.applicationContext, "Your Auth has been Authentic") }
+            Log.e("Authentic", "Yes I am Authentic")
 
-        var sharedPref = context?.getSharedPreferences("Call", Context.MODE_PRIVATE) ?: return
-        val dailySms = sharedPref.getBoolean("daily", false)
-        val incoming = sharedPref.getBoolean("incoming", false)
-        val outgoing = sharedPref.getBoolean("outgoing", false)
+            var sharedPref = context?.getSharedPreferences("Call", Context.MODE_PRIVATE) ?: return
+            val dailySms = sharedPref.getBoolean("daily", false)
+            val incoming = sharedPref.getBoolean("incoming", false)
+            val outgoing = sharedPref.getBoolean("outgoing", false)
 
-        var tm : TelephonyManager = context?.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-        if (intent?.getStringExtra(TelephonyManager.EXTRA_STATE) == TelephonyManager.EXTRA_STATE_OFFHOOK) {
-            val number: String =
-                intent!!.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER).toString()
+            var tm: TelephonyManager =
+                context?.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+            if (intent?.getStringExtra(TelephonyManager.EXTRA_STATE) == TelephonyManager.EXTRA_STATE_OFFHOOK) {
+                val number: String =
+                    intent!!.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER).toString()
 
-            if (outgoing) {
-                if (number != null) {
-                    if (dailySms) {
-                        lastCallCompare(context, number, false)
-                    } else {
-                        sendMsg(context, number)
+                if (outgoing) {
+                    if (number != null) {
+                        if (dailySms) {
+                            lastCallCompare(context, number, false)
+                        } else {
+                            sendMsg(context, number)
+                        }
+                    }
+                }
+            } else if (intent?.getStringExtra(TelephonyManager.EXTRA_STATE) == TelephonyManager.EXTRA_STATE_RINGING) {
+                val number: String =
+                    intent!!.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER).toString()
+                if (incoming) {
+                    if (number != null) {
+                        if (dailySms) {
+                            lastCallCompare(context, number, true)
+                        } else {
+                            sendMsg(context, number)
+                        }
                     }
                 }
             }
-        } else if (intent?.getStringExtra(TelephonyManager.EXTRA_STATE) == TelephonyManager.EXTRA_STATE_RINGING) {
-            val number: String =
-                intent!!.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER).toString()
-            if (incoming) {
-                if (number != null) {
-                    if (dailySms) {
-                        lastCallCompare(context, number, true)
-                    } else {
-                        sendMsg(context, number)
-                    }
-                }
-            }
+        }else{
+            Toast.makeText(context?.applicationContext, "SMS Marketing Not Started Please Login", Toast.LENGTH_SHORT).show()
         }
     }
 
-    fun showToastMsg(c: Context, msg: String) {
+    private fun showToastMsg(c: Context, msg: String) {
         val toast = Toast.makeText(c, msg, Toast.LENGTH_LONG)
         toast.setGravity(Gravity.CENTER, 0, 0)
         toast.show()

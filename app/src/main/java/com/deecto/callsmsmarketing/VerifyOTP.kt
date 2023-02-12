@@ -1,16 +1,19 @@
 package com.deecto.callsmsmarketing
 
+import android.content.ContentValues.TAG
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.android.synthetic.main.activity_verify_otp.*
 import java.util.concurrent.TimeUnit
@@ -20,6 +23,7 @@ class VerifyOTP : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var verificationId: String
     private lateinit var dialog: AlertDialog
+    private val db = Firebase.firestore
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,9 +75,25 @@ class VerifyOTP : AppCompatActivity() {
                     PhoneAuthProvider.getCredential(verificationId, editTextOtp.text!!.toString())
                 auth.signInWithCredential(credential).addOnCompleteListener {
                     if (it.isSuccessful) {
+                        val docRef = db.collection("users").document(auth.uid.toString())
+                        docRef.get()
+                            .addOnSuccessListener { document ->
+                                if (document.data != null) {
+                                    Log.d(TAG, "DocumentSnapshot data: ${document.data}")
+                                    startActivity(Intent(this, MainActivity::class.java))
+                                    finish()
+                                } else {
+                                    Log.d(TAG, "No such document")
+//                                    RegisterUser
+                                    startActivity(Intent(this, RegisterUser::class.java))
+                                    finish()
+                                }
+                            }
+                            .addOnFailureListener { exception ->
+                                Log.d(TAG, "get failed with ", exception)
+                            }
                         dialog.dismiss()
-                        startActivity(Intent(this, MainActivity::class.java))
-                        finish()
+
                     } else {
                         dialog.dismiss()
                         Toast.makeText(this@VerifyOTP, "Error ${it.exception}", Toast.LENGTH_SHORT)
@@ -82,6 +102,9 @@ class VerifyOTP : AppCompatActivity() {
                 }
             }
         }
-
+        changeMobile.setOnClickListener {
+            startActivity(Intent(this, Login::class.java))
+            finish()
+        }
     }
 }

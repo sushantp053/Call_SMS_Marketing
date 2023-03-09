@@ -20,7 +20,7 @@ class SplashScreen : AppCompatActivity() {
             if(currentUser != null){
                 val i = Intent(
                     this@SplashScreen,
-                    MainActivity::class.java
+                    Dashboard::class.java
                 )
                 startActivity(i)
                 finish()

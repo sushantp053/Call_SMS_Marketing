@@ -37,9 +37,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setContentView(R.layout.activity_main)
 
         auth = Firebase.auth
         if (auth.currentUser == null) {
@@ -123,6 +121,7 @@ class MainActivity : AppCompatActivity() {
                 this,
                 MessageActivity::class.java
             )
+            startActivity(i)
         }
         logoutCard.setOnClickListener {
             val builder = AlertDialog.Builder(this)

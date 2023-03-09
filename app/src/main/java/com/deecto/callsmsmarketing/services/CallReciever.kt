@@ -1,15 +1,19 @@
 package com.deecto.callsmsmarketing.services
 
+import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.telephony.SmsManager
+import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
 import android.util.Log
 import android.view.Gravity
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.app.ActivityCompat
 import com.deecto.callsmsmarketing.database.DaySMSCounterDao
 import com.deecto.callsmsmarketing.database.MessageDao
 import com.deecto.callsmsmarketing.database.MessageDatabase
@@ -32,20 +36,32 @@ class CallReciever : BroadcastReceiver() {
     private lateinit var auth: FirebaseAuth
     private lateinit var database: MessageDatabase
 
-    @RequiresApi(Build.VERSION_CODES.Q)
+    @RequiresApi(Build.VERSION_CODES.R)
     override fun onReceive(context: Context?, intent: Intent?) {
         auth = Firebase.auth
         if (auth.currentUser != null) {
             context?.let { showToastMsg(it.applicationContext, "Your Auth has been Authentic") }
-            Log.e("Authentic", "Yes I am Authentic")
 
             var sharedPref = context?.getSharedPreferences("Call", Context.MODE_PRIVATE) ?: return
             val dailySms = sharedPref.getBoolean("daily", false)
             val incoming = sharedPref.getBoolean("incoming", false)
             val outgoing = sharedPref.getBoolean("outgoing", false)
 
-            var tm: TelephonyManager =
-                context?.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.READ_SMS
+                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.READ_PHONE_NUMBERS
+                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.READ_PHONE_STATE
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
+
             if (intent?.getStringExtra(TelephonyManager.EXTRA_STATE) == TelephonyManager.EXTRA_STATE_OFFHOOK) {
                 val number: String =
                     intent!!.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER).toString()
@@ -72,8 +88,12 @@ class CallReciever : BroadcastReceiver() {
                     }
                 }
             }
-        }else{
-            Toast.makeText(context?.applicationContext, "SMS Marketing Not Started Please Login", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(
+                context?.applicationContext,
+                "SMS Marketing Not Started Please Login",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -86,10 +106,8 @@ class CallReciever : BroadcastReceiver() {
     private fun sendMsg(context: Context?, number: String) {
 
         database = MessageDatabase.getDatabase(context!!.applicationContext)
-        Log.e("Send SMS Method", "Method Called")
         try {
             if (number.length >= 10) {
-                Log.e("Length Matched", "Greater than 10 digits")
                 if (number.length == 10) {
                     var a = Integer.parseInt(number.subSequence(0, 2).toString())
                     if (a > 55) {
@@ -110,11 +128,7 @@ class CallReciever : BroadcastReceiver() {
                     }
 
                 } else if (number.subSequence(0, 3).equals("+91")) {
-
-                    Log.e(
-                        "Error Code",
-                        "Code Matched ${number.subSequence(3, 5)} $number"
-                    )
+//
                     CoroutineScope(Dispatchers.Default).launch {
                         var messageDio: MessageDao = database.getMessageDao()
                         var msg = messageDio.getDefaultMessage(true)
@@ -154,10 +168,7 @@ class CallReciever : BroadcastReceiver() {
                     parseLong(formatted.toString()) - parseLong(phoneCallDetails.outgoing_time)
                 if (incomingDifferance > (24 * 60 * 60) && outgoingDifferance > (24 * 60 * 60)) {
                     sendMsg(context, number)
-                    Log.e(
-                        "Compare Worked",
-                        "Compared $outgoingDifferance and incoming $incomingDifferance"
-                    )
+
                 } else {
                     Log.e("Hours are Lessor", "Last Call done in 24 hours")
                 }
@@ -179,7 +190,6 @@ class CallReciever : BroadcastReceiver() {
     }
 
     private fun changeCounter(context: Context?) {
-        Log.e("Counter", "Day Change Counter Called")
         database = MessageDatabase.getDatabase(context!!.applicationContext)
         val current = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
@@ -191,11 +201,9 @@ class CallReciever : BroadcastReceiver() {
                 val dayDetails = daySMSCounterDao.getDayCount(formattedDate)
                 daySMSCounterDao.updateDayCount(formattedDate.toString())
 
-                Log.e("Counter", "Day Change Counter Called")
 
             } catch (e: Exception) {
 
-                Log.e("Counter Error", e.toString())
                 var daySMSCounter: DaySMSCounter = DaySMSCounter(null, formattedDate.toString(), 1)
                 daySMSCounterDao.insert(
                     daySMSCounter
@@ -203,4 +211,5 @@ class CallReciever : BroadcastReceiver() {
             }
         }
     }
+
 }

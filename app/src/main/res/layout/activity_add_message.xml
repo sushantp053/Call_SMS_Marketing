@@ -4,45 +4,62 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#F4F2FE"
+    android:orientation="vertical"
     tools:context=".AddMessage">
 
     <TextView
+        android:layout_marginTop="16dp"
         android:id="@+id/textViewTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
         android:text="Title"
-        tools:layout_editor_absoluteX="73dp"
-        tools:layout_editor_absoluteY="46dp" />
+        android:textStyle="bold" />
 
     <EditText
         android:id="@+id/editTextTextTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
         android:ems="10"
-        android:inputType="textPersonName"
-        android:text="Title" />
+        android:hint="Title"
+        android:inputType="textPersonName" />
+
     <TextView
+        android:layout_marginTop="16dp"
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
         android:text="Message"
-        tools:layout_editor_absoluteX="73dp"
-        tools:layout_editor_absoluteY="46dp" />
+        android:textStyle="bold" />
 
-    <EditText
-        android:id="@+id/editTextTextMessage"
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/textContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:ems="10"
-        android:inputType="textPersonName"
-        android:text="Type your message here!" />
+        android:layout_marginHorizontal="16dp"
+        app:counterEnabled="true"
+        android:elevation="5dp"
+        app:counterMaxLength="160">
+
+        <EditText
+            android:id="@+id/editTextTextMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="Type your message here!"
+            android:inputType="textMultiLine" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
     <Button
+        android:layout_marginHorizontal="16dp"
         android:id="@+id/btnSave"
-        android:text="Save"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:gravity="center"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:text="Save" />
 </LinearLayout>

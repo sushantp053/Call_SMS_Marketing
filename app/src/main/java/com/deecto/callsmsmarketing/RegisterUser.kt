@@ -44,7 +44,7 @@ class RegisterUser : AppCompatActivity() {
                             val current = LocalDateTime.now()
                             val formatter2 = DateTimeFormatter.ofPattern("yyyyMMdd")
                             val selectedDate = current.format(formatter2)
-                            val s = (selectedDate.toInt() + 7).toString()
+                            val s = (selectedDate.toInt() + 3).toString()
 
                             val builder = AlertDialog.Builder(this)
                             builder.setMessage("Please wait.....")

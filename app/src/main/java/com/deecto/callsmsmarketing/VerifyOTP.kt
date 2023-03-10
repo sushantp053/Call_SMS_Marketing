@@ -84,7 +84,7 @@ class VerifyOTP : AppCompatActivity() {
                             .addOnSuccessListener { document ->
                                 if (document.data != null) {
                                     Log.d(TAG, "DocumentSnapshot data: ${document.data}")
-                                    startActivity(Intent(this, MainActivity::class.java))
+                                    startActivity(Intent(this, Dashboard::class.java))
                                     finish()
                                 } else {
                                     Log.d(TAG, "No such document")

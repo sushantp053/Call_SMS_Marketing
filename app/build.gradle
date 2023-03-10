@@ -65,5 +65,6 @@ dependencies {
     implementation 'javax.inject:javax.inject:1'
 
     implementation 'com.github.judemanutd:autostarter:1.1.0'
+    implementation 'com.google.android.gms:play-services-auth:20.4.1'
 
 }

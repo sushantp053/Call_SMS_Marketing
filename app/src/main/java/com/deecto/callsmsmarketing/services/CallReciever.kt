@@ -2,18 +2,23 @@ package com.deecto.callsmsmarketing.services
 
 import android.Manifest
 import android.content.BroadcastReceiver
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.PixelFormat
 import android.os.Build
 import android.telephony.SmsManager
-import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
 import android.util.Log
 import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat.getSystemService
+import com.deecto.callsmsmarketing.R
 import com.deecto.callsmsmarketing.database.DaySMSCounterDao
 import com.deecto.callsmsmarketing.database.MessageDao
 import com.deecto.callsmsmarketing.database.MessageDatabase
@@ -22,13 +27,16 @@ import com.deecto.callsmsmarketing.model.DaySMSCounter
 import com.deecto.callsmsmarketing.model.PhoneCall
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.lang.Long.parseLong
+import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 
 class CallReciever : BroadcastReceiver() {
@@ -40,7 +48,6 @@ class CallReciever : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         auth = Firebase.auth
         if (auth.currentUser != null) {
-            context?.let { showToastMsg(it.applicationContext, "Your Auth has been Authentic") }
 
             var sharedPref = context?.getSharedPreferences("Call", Context.MODE_PRIVATE) ?: return
             val dailySms = sharedPref.getBoolean("daily", false)
@@ -71,7 +78,7 @@ class CallReciever : BroadcastReceiver() {
                         if (dailySms) {
                             lastCallCompare(context, number, false)
                         } else {
-                            sendMsg(context, number)
+                            checkUserData(context, number)
                         }
                     }
                 }
@@ -83,10 +90,13 @@ class CallReciever : BroadcastReceiver() {
                         if (dailySms) {
                             lastCallCompare(context, number, true)
                         } else {
-                            sendMsg(context, number)
+//                            sendMsg(context, number)
+                            checkUserData(context, number)
                         }
                     }
                 }
+            }else if((intent?.getStringExtra(TelephonyManager.EXTRA_STATE) == TelephonyManager.EXTRA_STATE_IDLE)) {
+                Toast.makeText(context?.applicationContext, "Idle State", Toast.LENGTH_SHORT).show()
             }
         } else {
             Toast.makeText(
@@ -143,6 +153,7 @@ class CallReciever : BroadcastReceiver() {
                         )
                     }
                     changeCounter(context)
+                    showPopUp(context)
                 }
             }
 
@@ -167,8 +178,8 @@ class CallReciever : BroadcastReceiver() {
                 val outgoingDifferance =
                     parseLong(formatted.toString()) - parseLong(phoneCallDetails.outgoing_time)
                 if (incomingDifferance > (24 * 60 * 60) && outgoingDifferance > (24 * 60 * 60)) {
-                    sendMsg(context, number)
-
+//                    sendMsg(context, number)
+                    checkUserData(context, number)
                 } else {
                     Log.e("Hours are Lessor", "Last Call done in 24 hours")
                 }
@@ -179,7 +190,8 @@ class CallReciever : BroadcastReceiver() {
                 }
             } catch (e: Exception) {
                 Log.e("Time comparing error", e.message.toString())
-                sendMsg(context, number)
+//                sendMsg(context, number)
+                checkUserData(context, number)
                 var phoneCall: PhoneCall =
                     PhoneCall(null, number, formatted, formatted, "active", 1)
                 phoneCallDao.insert(phoneCall)
@@ -210,6 +222,79 @@ class CallReciever : BroadcastReceiver() {
                 )
             }
         }
+    }
+
+    private fun checkUserData(context: Context?, number: String) {
+
+        val current = LocalDateTime.now()
+        val formatter2 = DateTimeFormatter.ofPattern("yyyyMMdd")
+        val selectedDate = current.format(formatter2)
+
+        val db = Firebase.firestore
+
+        Log.e(ContentValues.TAG, "Checking User Data")
+        val docRef = db.collection("users").document(auth.uid.toString())
+        docRef.get()
+            .addOnSuccessListener { document ->
+                if (document.data != null) {
+                    Log.e(ContentValues.TAG, "DocumentSnapshot data: ${document.data}")
+
+                    val days: Int =
+                        getDaysBetweenDates(
+                            selectedDate.toString(),
+                            document.data!!.get("end_date").toString(),
+                            "yyyyMMdd"
+                        )
+                    if (days <= 0) {
+                        context?.let { showToastMsg(it.applicationContext, "SMS not able send.") }
+                        context?.let { showToastMsg(it.applicationContext, "Your Account has been expired.") }
+                    } else {
+                        sendMsg(context, number)
+                    }
+
+                } else {
+                    Log.e(ContentValues.TAG, "No such document")
+//                                    RegisterUser
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.d(ContentValues.TAG, "get failed with ", exception)
+            }
+    }
+
+    fun getDaysBetweenDates(
+        firstDateValue: String,
+        secondDateValue: String,
+        format: String
+    ): Int {
+        val sdf = SimpleDateFormat(format, Locale.getDefault())
+
+        val firstDate = sdf.parse(firstDateValue)
+        val secondDate = sdf.parse(secondDateValue)
+
+        if (firstDate == null || secondDate == null)
+            return 0
+
+        return (((secondDate.time - firstDate.time) / (1000 * 60 * 60 * 24)) + 1).toInt()
+    }
+
+    fun showPopUp(context: Context?){
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.TRANSLUCENT
+        )
+        params.gravity = Gravity.TOP or Gravity.START
+        params.x = 0
+        params.y = 0
+
+        val inflater = context?.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val floatingView = inflater.inflate(R.layout.floating_window_layout, null)
+
+        val windowManager = context?.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        windowManager.addView(floatingView, params)
     }
 
 }

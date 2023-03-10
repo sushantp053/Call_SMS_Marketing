@@ -7,6 +7,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.deecto.callsmsmarketing.databinding.ActivityVerifyOtpBinding
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
@@ -15,7 +16,6 @@ import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import kotlinx.android.synthetic.main.activity_verify_otp.*
 import java.util.concurrent.TimeUnit
 
 class VerifyOTP : AppCompatActivity() {
@@ -24,11 +24,15 @@ class VerifyOTP : AppCompatActivity() {
     private lateinit var verificationId: String
     private lateinit var dialog: AlertDialog
     private val db = Firebase.firestore
-
+    private lateinit var binding: ActivityVerifyOtpBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_verify_otp)
+
+        binding = ActivityVerifyOtpBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
+
         auth = Firebase.auth
 
         val builder = AlertDialog.Builder(this)
@@ -41,7 +45,7 @@ class VerifyOTP : AppCompatActivity() {
 
         val phoneNumber = "+91" + intent.getStringExtra("number")
 
-        otpMobile.text = phoneNumber
+        binding.otpMobile.text = phoneNumber
 
         val options = PhoneAuthOptions.newBuilder(auth)
             .setPhoneNumber(phoneNumber)
@@ -66,13 +70,13 @@ class VerifyOTP : AppCompatActivity() {
 
         PhoneAuthProvider.verifyPhoneNumber(options)
 
-        verifyOTPCard.setOnClickListener {
-            if (editTextOtp.text!!.isEmpty()) {
+        binding.verifyOTPCard.setOnClickListener {
+            if (binding.editTextOtp.text!!.isEmpty()) {
                 Toast.makeText(this, "Please Enter OTP....", Toast.LENGTH_SHORT).show()
             } else {
                 dialog.show()
                 val credential =
-                    PhoneAuthProvider.getCredential(verificationId, editTextOtp.text!!.toString())
+                    PhoneAuthProvider.getCredential(verificationId, binding.editTextOtp.text!!.toString())
                 auth.signInWithCredential(credential).addOnCompleteListener {
                     if (it.isSuccessful) {
                         val docRef = db.collection("users").document(auth.uid.toString())
@@ -102,7 +106,7 @@ class VerifyOTP : AppCompatActivity() {
                 }
             }
         }
-        changeMobile.setOnClickListener {
+        binding.changeMobile.setOnClickListener {
             startActivity(Intent(this, Login::class.java))
             finish()
         }

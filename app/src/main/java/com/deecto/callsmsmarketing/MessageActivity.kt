@@ -14,7 +14,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.deecto.callsmsmarketing.Adapter.MessageAdapter
 import com.deecto.callsmsmarketing.database.MessageDatabase
-import kotlinx.android.synthetic.main.activity_message.*
+import com.deecto.callsmsmarketing.databinding.ActivityMessageBinding
 
 import com.deecto.callsmsmarketing.model.Message
 import com.deecto.callsmsmarketing.model.MessageViewModel
@@ -26,6 +26,7 @@ class MessageActivity : AppCompatActivity(), MessageAdapter.MessageItemClickList
     lateinit var viewModel: MessageViewModel
     lateinit var adapter: MessageAdapter
     lateinit var selectedMessage: Message
+    private lateinit var binding: ActivityMessageBinding
 
     private val updateMessage =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -41,7 +42,10 @@ class MessageActivity : AppCompatActivity(), MessageAdapter.MessageItemClickList
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_message)
+
+        binding = ActivityMessageBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
 
         //initialize the UI
         initUi()
@@ -61,10 +65,10 @@ class MessageActivity : AppCompatActivity(), MessageAdapter.MessageItemClickList
 
     }
     private fun initUi() {
-        messageRecycler.setHasFixedSize(true)
-        messageRecycler.layoutManager = LinearLayoutManager(applicationContext)
+        binding.messageRecycler.setHasFixedSize(true)
+        binding.messageRecycler.layoutManager = LinearLayoutManager(applicationContext)
         adapter = MessageAdapter(this, this)
-         messageRecycler.adapter = adapter
+        binding.messageRecycler.adapter = adapter
 
         val getContent =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -78,7 +82,7 @@ class MessageActivity : AppCompatActivity(), MessageAdapter.MessageItemClickList
                 }
             }
 
-         fab.setOnClickListener {
+        binding.fab.setOnClickListener {
             val intent = Intent(this, AddMessage::class.java)
             getContent.launch(intent)
         }

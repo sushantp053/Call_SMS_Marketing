@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.deecto.callsmsmarketing.R
 import com.deecto.callsmsmarketing.model.Message
 
-class MessageAdapter(private val context: Context, val listener: MessageItemClickListener) :
+class MessageAdapter(private val context: Context, private val listener: MessageItemClickListener) :
     RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
 
     private val messageList = ArrayList<Message>()

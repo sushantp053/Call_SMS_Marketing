@@ -19,7 +19,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,19 +30,20 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var auth: FirebaseAuth
     private lateinit var database: MessageDatabase
-    private val permissionsRequestCode = 123
-    private lateinit var managePermissions: ManagePermissions
     private val db = Firebase.firestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
 
         auth = Firebase.auth
         if (auth.currentUser == null) {
             startActivity(Intent(this, Login::class.java))
             finish()
-        }else{
+        } else {
             checkUserData()
         }
 
@@ -54,7 +54,7 @@ class MainActivity : AppCompatActivity() {
             var messageDio: MessageDao = database.getMessageDao()
             var msg = messageDio.getDefaultMessage(true)
             try {
-                textViewCurrentMsg.text = msg.message
+                binding.textViewCurrentMsg.text = msg.message
             } catch (e: Exception) {
                 Log.e("set text error", e.toString())
             }
@@ -63,67 +63,58 @@ class MainActivity : AppCompatActivity() {
             val current = LocalDateTime.now()
             val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
             val formattedDate = current.format(formatter)
-                var daySMSCounterDao: DaySMSCounterDao = database.getDaySMSCounterDao()
-                try {
-                    val dayDetails = daySMSCounterDao.getDayCount(formattedDate)
-                    val totalCount = daySMSCounterDao.getTotalCount()
+            var daySMSCounterDao: DaySMSCounterDao = database.getDaySMSCounterDao()
+            try {
+                val dayDetails = daySMSCounterDao.getDayCount(formattedDate)
+                val totalCount = daySMSCounterDao.getTotalCount()
 
-                    totalSmsCount.text = totalCount.toString()
-                    dailySmsCount.text = dayDetails.counter.toString()
+                binding.totalSmsCount.text = totalCount.toString()
+                binding.dailySmsCount.text = dayDetails.counter.toString()
 
-                } catch (e: Exception) {
-                    Log.e("Set Count Error", e.toString())
-                    dailySmsCount.text = "0"
-                    var daySMSCounter: DaySMSCounter = DaySMSCounter(null, formattedDate.toString(), 0)
-                    daySMSCounterDao.insert(
-                        daySMSCounter
-                    )
-                }
+            } catch (e: Exception) {
+                Log.e("Set Count Error", e.toString())
+                binding.dailySmsCount.text = "0"
+                var daySMSCounter: DaySMSCounter = DaySMSCounter(null, formattedDate.toString(), 0)
+                daySMSCounterDao.insert(
+                    daySMSCounter
+                )
+            }
         }
 
         val sharedPref = this.getSharedPreferences("Call", Context.MODE_PRIVATE) ?: return
         val dailySms = sharedPref.getBoolean("daily", false)
         val incoming = sharedPref.getBoolean("incoming", false)
         val outgoing = sharedPref.getBoolean("outgoing", false)
-        dailyOne.isChecked = dailySms
-        incomingCallSwitch.isChecked = incoming
-        outGoingCallSwitch.isChecked = outgoing
-        dailyOne.setOnCheckedChangeListener { _, isChecked ->
+        binding.dailyOne.isChecked = dailySms
+        binding.incomingCallSwitch.isChecked = incoming
+        binding.outGoingCallSwitch.isChecked = outgoing
+        binding.dailyOne.setOnCheckedChangeListener { _, isChecked ->
             with(sharedPref.edit()) {
                 putBoolean("daily", isChecked)
                 apply()
             }
         }
-        incomingCallSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+        binding.incomingCallSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
             with(sharedPref.edit()) {
                 putBoolean("incoming", isChecked)
                 apply()
             }
         }
-        outGoingCallSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+        binding.outGoingCallSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
             with(sharedPref.edit()) {
                 putBoolean("outgoing", isChecked)
                 apply()
             }
         }
-        val list = listOf<String>(
-            Manifest.permission.READ_PHONE_STATE,
-            Manifest.permission.READ_CALL_LOG,
-            Manifest.permission.SEND_SMS
-        )
-        // Initialize a new instance of ManagePermissions class
-        managePermissions = ManagePermissions(this,list,permissionsRequestCode)
 
-        managePermissions.checkPermissions()
-
-        changeMessageCard.setOnClickListener {
+        binding.changeMessageCard.setOnClickListener {
             val i = Intent(
                 this,
                 MessageActivity::class.java
             )
             startActivity(i)
         }
-        logoutCard.setOnClickListener {
+        binding.logoutCard.setOnClickListener {
             val builder = AlertDialog.Builder(this)
             builder.setTitle("Sign Out")
             builder.setMessage("Do you really want to Sign Out. To Use app you need to Login.")
@@ -145,7 +136,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkUserData(){
+    private fun checkUserData() {
 
         Log.e(ContentValues.TAG, "Checking User Data")
         val docRef = db.collection("users").document(auth.uid.toString())

@@ -5,11 +5,11 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.deecto.callsmsmarketing.databinding.ActivityRegisterUserBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import kotlinx.android.synthetic.main.activity_register_user.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -18,19 +18,24 @@ class RegisterUser : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private val db = Firebase.firestore
     private lateinit var dialog: AlertDialog
+    private lateinit var binding: ActivityRegisterUserBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_register_user)
+
+        binding = ActivityRegisterUserBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
+
         auth = Firebase.auth
         if (auth.currentUser == null) {
             startActivity(Intent(this, Login::class.java))
             finish()
         }
-        saveBtn.setOnClickListener {
-            val businessName = etBusinessName.text.toString()
-            val address = etAddress.text.toString()
-            val email = etEmail.text.toString()
+        binding.saveBtn.setOnClickListener {
+            val businessName = binding.etBusinessName.text.toString()
+            val address = binding.etAddress.text.toString()
+            val email = binding.etEmail.text.toString()
             if (businessName.isNotEmpty()) {
                 if (address.isNotEmpty()) {
                     if (email.isNotEmpty()) {

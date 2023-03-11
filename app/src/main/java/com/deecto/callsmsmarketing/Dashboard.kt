@@ -95,8 +95,32 @@ class Dashboard : AppCompatActivity() {
             var intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
         }
+        binding.cardAutoWhatsapp.setOnClickListener {
+            var intent = Intent(this, WhatsAppAuto::class.java)
+            startActivity(intent)
+        }
         binding.settingCard.setOnClickListener {
             var intent = Intent(this, PermissionActivity::class.java)
+            startActivity(intent)
+        }
+        binding.cardWebsite.setOnClickListener {
+            var intent = Intent(this, ComingSoon::class.java)
+            startActivity(intent)
+        }
+        binding.cardAutoDialer.setOnClickListener {
+            var intent = Intent(this, ComingSoon::class.java)
+            startActivity(intent)
+        }
+        binding.cardContactBlocker.setOnClickListener {
+            var intent = Intent(this, ComingSoon::class.java)
+            startActivity(intent)
+        }
+        binding.cardTutorial.setOnClickListener {
+            var intent = Intent(this, ComingSoon::class.java)
+            startActivity(intent)
+        }
+        binding.cardReminder.setOnClickListener {
+            var intent = Intent(this, ComingSoon::class.java)
             startActivity(intent)
         }
     }

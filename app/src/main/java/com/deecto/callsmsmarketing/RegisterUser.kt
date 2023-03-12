@@ -69,7 +69,7 @@ class RegisterUser : AppCompatActivity() {
                             user.document(auth.uid.toString()).set(userData).addOnSuccessListener {
 
                                 dialog.dismiss()
-                                startActivity(Intent(this@RegisterUser, MainActivity::class.java))
+                                startActivity(Intent(this@RegisterUser, Dashboard::class.java))
                                 finish()
                             }.addOnFailureListener {
                                 dialog.dismiss()

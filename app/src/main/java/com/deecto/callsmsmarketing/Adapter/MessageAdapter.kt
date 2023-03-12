@@ -79,8 +79,8 @@ class MessageAdapter(private val context: Context, private val listener: Message
         val message_layout = itemView.findViewById<CardView>(R.id.messageCard)
         val title = itemView.findViewById<TextView>(R.id.tv_title)
         val message = itemView.findViewById<TextView>(R.id.tv_message)
-        val deleteBtn = itemView.findViewById<TextView>(R.id.tv_message)
-        val editBtn = itemView.findViewById<TextView>(R.id.tv_message)
+        val deleteBtn = itemView.findViewById<TextView>(R.id.deleteBtn)
+        val editBtn = itemView.findViewById<TextView>(R.id.editBtn)
         val created = itemView.findViewById<TextView>(R.id.tv_created)
         val currentMsg = itemView.findViewById<Switch>(R.id.currentMsg)
     }

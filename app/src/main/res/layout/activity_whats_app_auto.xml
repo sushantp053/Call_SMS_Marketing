@@ -80,7 +80,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="8dp"
-                                    android:text="985435"
+                                    android:text="00"
                                     android:textSize="24sp"
                                     android:textStyle="bold"
                                     app:layout_constraintEnd_toEndOf="parent"
@@ -108,7 +108,7 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="8dp"
-                                    android:text="58"
+                                    android:text="00"
                                     android:textSize="24sp"
                                     android:textStyle="bold"
                                     app:layout_constraintEnd_toEndOf="parent"
@@ -233,7 +233,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Incoming Call"
+                                android:text="Send Whats Message"
                                 app:layout_constraintEnd_toEndOf="parent"
                                 app:layout_constraintStart_toStartOf="parent"
                                 app:layout_constraintTop_toTopOf="parent" />
@@ -261,7 +261,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Outgoing Call"
+                                android:text="Attach Media File"
                                 app:layout_constraintEnd_toEndOf="parent"
                                 app:layout_constraintStart_toStartOf="parent"
                                 app:layout_constraintTop_toTopOf="parent" />
@@ -274,35 +274,7 @@
                                 android:gravity="end"
                                 tools:ignore="UseSwitchCompatOrMaterialXml" />
                         </LinearLayout>
-                        <View
-                            android:layout_margin="8dp"
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:background="#AAA8A8" />
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:layout_weight="1"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Daily SMS Limit"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toTopOf="parent" />
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="100 SMS"
-                                android:layout_gravity="end"
-                                android:gravity="end"
-                                app:layout_constraintEnd_toEndOf="parent"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toTopOf="parent" />
-                        </LinearLayout>
 
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>

@@ -1,11 +1,11 @@
 package com.deecto.callsmsmarketing
 
-import android.Manifest
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -14,7 +14,6 @@ import com.deecto.callsmsmarketing.database.MessageDao
 import com.deecto.callsmsmarketing.database.MessageDatabase
 import com.deecto.callsmsmarketing.databinding.ActivityMainBinding
 import com.deecto.callsmsmarketing.model.DaySMSCounter
-import com.deecto.callsmsmarketing.services.ManagePermissions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
@@ -31,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var database: MessageDatabase
     private val db = Firebase.firestore
+    private var limit: Int = 100
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,9 +85,16 @@ class MainActivity : AppCompatActivity() {
         val dailySms = sharedPref.getBoolean("daily", false)
         val incoming = sharedPref.getBoolean("incoming", false)
         val outgoing = sharedPref.getBoolean("outgoing", false)
+        limit = sharedPref.getInt("limit", 100)
+
         binding.dailyOne.isChecked = dailySms
         binding.incomingCallSwitch.isChecked = incoming
         binding.outGoingCallSwitch.isChecked = outgoing
+        binding.limitText.text = "$limit SMS"
+
+        binding.smsLimitLayout.setOnClickListener {
+            withEditText()
+        }
         binding.dailyOne.setOnCheckedChangeListener { _, isChecked ->
             with(sharedPref.edit()) {
                 putBoolean("daily", isChecked)
@@ -156,6 +163,28 @@ class MainActivity : AppCompatActivity() {
             .addOnFailureListener { exception ->
                 Log.d(ContentValues.TAG, "get failed with ", exception)
             }
+    }
+
+    private fun withEditText() {
+        val sharedPref = this.getSharedPreferences("Call", Context.MODE_PRIVATE) ?: return
+        val builder = AlertDialog.Builder(this)
+        val inflater = layoutInflater
+        builder.setTitle("Set Limit")
+        val dialogLayout = inflater.inflate(R.layout.alert_dialog_with_edittext, null)
+        val editText = dialogLayout.findViewById<EditText>(R.id.editText)
+        editText.setText("$limit")
+        builder.setView(dialogLayout)
+        builder.setPositiveButton("OK") { dialogInterface, i ->
+            Toast.makeText(
+                applicationContext,
+                "New Limit set to " + editText.text.toString(),
+                Toast.LENGTH_SHORT
+            ).show()
+            sharedPref.edit().putInt("limit", editText.text.toString().toInt())
+                .apply()
+            binding.limitText.setText("${editText.text.toString().toInt()} SMS")
+        }
+        builder.show()
     }
 }
 

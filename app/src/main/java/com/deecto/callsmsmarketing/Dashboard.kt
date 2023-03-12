@@ -225,7 +225,7 @@ class Dashboard : AppCompatActivity() {
         builder.show()
     }
 
-    fun showPlanVExpiredDialog(days: String, plan: String) {
+    private fun showPlanVExpiredDialog(days: String, plan: String) {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Your Plan is Expired")
         builder.setMessage("Hello your $plan plan is expired from $days days.\nFor uninterrupted service renew your plan")

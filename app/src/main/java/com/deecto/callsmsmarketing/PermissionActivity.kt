@@ -9,10 +9,15 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
+import com.deecto.callsmsmarketing.databinding.ActivityMainBinding
+import com.deecto.callsmsmarketing.databinding.ActivityPermissionBinding
+import com.judemanutd.autostarter.AutoStartPermissionHelper
 
 class PermissionActivity : AppCompatActivity() {
 
-    val PERMISSION_REQUEST_CODE = 1
+    private lateinit var binding: ActivityPermissionBinding
+
+    private val PERMISSION_REQUEST_CODE = 1
     private fun showDialog(titleText: String, messageText: String) {
         with(AlertDialog.Builder(this)) {
             title = titleText
@@ -24,8 +29,7 @@ class PermissionActivity : AppCompatActivity() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
-    private fun requestPermission() {
+    private fun requestPermissionFloatingWindow() {
         val intent = Intent(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
             Uri.parse("package:$packageName")
@@ -42,10 +46,21 @@ class PermissionActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_permission)
-        requestPermission()
+        binding = ActivityPermissionBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
+
+        binding.cardFloatingWindow.setOnClickListener {
+            requestPermissionFloatingWindow();
+        }
+
+        binding.cardAutoPlayPermission.setOnClickListener {
+            AutoStartPermissionHelper.getInstance().getAutoStartPermission(this)
+        }
+
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         // Don't check for resultCode == Activity.RESULT_OK because the overlay activity
         // is closed with the back button and so the RESULT_CANCELLED is always received.
@@ -60,7 +75,7 @@ class PermissionActivity : AppCompatActivity() {
             super.onActivityResult(requestCode, resultCode, data)
         }
     }
-    fun Context.drawOverOtherAppsEnabled(): Boolean {
+    private fun Context.drawOverOtherAppsEnabled(): Boolean {
         return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             true
         } else {

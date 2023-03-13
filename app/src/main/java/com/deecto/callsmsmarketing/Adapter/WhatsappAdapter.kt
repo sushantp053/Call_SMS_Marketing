@@ -10,9 +10,10 @@ import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.deecto.callsmsmarketing.R
+import com.deecto.callsmsmarketing.WhatsappActivity
 import com.deecto.callsmsmarketing.model.WhatsappMessage
 
-class WhatsappAdapter(private val context: Context, private val listener: WhatsappItemClickListener) :
+class WhatsappAdapter(private val context: Context, private val listener: WhatsappActivity) :
     RecyclerView.Adapter<WhatsappAdapter.WhatsappViewHolder>() {
 
     private val messageList = ArrayList<WhatsappMessage>()

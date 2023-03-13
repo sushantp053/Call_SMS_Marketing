@@ -1,21 +1,14 @@
 package com.deecto.callsmsmarketing
 
-import androidx.appcompat.app.AppCompatActivity
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import com.deecto.callSMSmarketing.database.DayWhatsappDao
-import com.deecto.callsmsmarketing.database.DaySMSCounterDao
-import com.deecto.callsmsmarketing.database.MessageDao
 import com.deecto.callsmsmarketing.database.MessageDatabase
 import com.deecto.callsmsmarketing.database.WhatsappDao
-import com.deecto.callsmsmarketing.databinding.ActivityDashboardBinding
-import com.deecto.callsmsmarketing.databinding.ActivityMainBinding
 import com.deecto.callsmsmarketing.databinding.ActivityWhatsAppAutoBinding
-import com.deecto.callsmsmarketing.model.DaySMSCounter
 import com.deecto.callsmsmarketing.model.DayWhatsappCounter
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,7 +32,7 @@ class WhatsAppAuto : AppCompatActivity() {
 
         CoroutineScope(Dispatchers.Default).launch {
             var messageDio: WhatsappDao = database.getWhatsappDao()
-            var msg = messageDio.getDefaultMessage(true)
+            var msg = messageDio.getDefaultWhatsappMessage(true)
             try {
                 binding.textViewCurrentMsg.text = msg.message
             } catch (e: Exception) {
@@ -61,11 +54,17 @@ class WhatsAppAuto : AppCompatActivity() {
             } catch (e: Exception) {
                 Log.e("Set Count Error", e.toString())
                 binding.dailySmsCount.text = "0"
-                var dayWhatsappCounter: DayWhatsappCounter = DayWhatsappCounter(null, formattedDate.toString(), 0)
+                var dayWhatsappCounter: DayWhatsappCounter =
+                    DayWhatsappCounter(null, formattedDate.toString(), 0)
                 dayWhatsappCounterDao.insert(
                     dayWhatsappCounter
                 )
             }
+        }
+
+        binding.changeMessageCard.setOnClickListener {
+            var intent = Intent(this, WhatsappActivity::class.java)
+            startActivity(intent)
         }
 
     }

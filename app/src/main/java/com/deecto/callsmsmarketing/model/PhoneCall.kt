@@ -12,4 +12,4 @@ data class PhoneCall(
     @ColumnInfo(name = "incoming_time") var incoming_time: String,
     @ColumnInfo(name = "status") var status: String,
     @ColumnInfo(name = "counter") var counter: Int,
-)
+): java.io.Serializable

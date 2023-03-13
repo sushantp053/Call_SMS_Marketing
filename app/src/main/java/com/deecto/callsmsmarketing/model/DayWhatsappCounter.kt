@@ -8,4 +8,4 @@ import androidx.room.PrimaryKey
 data class DayWhatsappCounter(
     @PrimaryKey(autoGenerate = true) var id: Int?,
     @ColumnInfo(name = "day") var title: String?,
-    @ColumnInfo(name = "counter") var counter: Int?,)
+    @ColumnInfo(name = "counter") var counter: Int?,): java.io.Serializable

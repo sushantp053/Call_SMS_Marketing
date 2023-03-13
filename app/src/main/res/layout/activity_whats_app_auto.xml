@@ -30,6 +30,7 @@
                     app:layout_constraintStart_toStartOf="parent" />
 
                 <androidx.cardview.widget.CardView
+                    android:layout_marginTop="10dp"
                     android:id="@+id/counterCard"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

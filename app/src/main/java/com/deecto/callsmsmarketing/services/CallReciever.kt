@@ -1,19 +1,20 @@
 package com.deecto.callsmsmarketing.services
 
 import android.Manifest
-import android.content.BroadcastReceiver
-import android.content.ContentValues
-import android.content.Context
-import android.content.Intent
+import android.content.*
 import android.content.pm.PackageManager
+import android.database.Cursor
 import android.graphics.PixelFormat
 import android.os.Build
+import android.provider.CallLog
+import android.provider.CallLog.Calls.LIMIT_PARAM_KEY
 import android.telephony.SmsManager
 import android.telephony.TelephonyManager
 import android.util.Log
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.WindowManager
+import android.view.*
+import android.widget.Button
+import android.widget.ImageButton
+import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
@@ -94,7 +95,8 @@ class CallReciever : BroadcastReceiver() {
                     }
                 }
             } else if ((intent?.getStringExtra(TelephonyManager.EXTRA_STATE) == TelephonyManager.EXTRA_STATE_IDLE)) {
-//                Toast.makeText(context?.applicationContext, "Idle State", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context?.applicationContext, "Idle State", Toast.LENGTH_SHORT).show()
+                showPopUp(context)
             }
         } else {
             Toast.makeText(
@@ -130,7 +132,8 @@ class CallReciever : BroadcastReceiver() {
                             var daySMSCounterDao: DaySMSCounterDao = database.getDaySMSCounterDao()
                             val dayDetails = daySMSCounterDao.getDayCount(formattedDate)
 
-                            var sharedPref = context?.getSharedPreferences("Call", Context.MODE_PRIVATE)
+                            var sharedPref =
+                                context?.getSharedPreferences("Call", Context.MODE_PRIVATE)
                             val limit = sharedPref!!.getInt("limit", 100)
                             if (limit > dayDetails.counter!!) {
                                 // on below line we are sending text message.
@@ -139,8 +142,7 @@ class CallReciever : BroadcastReceiver() {
                                 )
 
                                 changeCounter(context)
-                            }
-                            else{
+                            } else {
                                 Toast.makeText(
                                     context,
                                     "Your Limit has been over",
@@ -172,10 +174,9 @@ class CallReciever : BroadcastReceiver() {
                             )
 
                             changeCounter(context)
-                        }else{
+                        } else {
                         }
                     }
-//                    showPopUp(context)
                 }
             }
 
@@ -257,35 +258,35 @@ class CallReciever : BroadcastReceiver() {
         Log.e(ContentValues.TAG, "Checking User Data")
         val docRef = db.collection("users").document(auth.uid.toString())
         docRef.get().addOnSuccessListener { document ->
-                if (document.data != null) {
-                    Log.e(ContentValues.TAG, "DocumentSnapshot data: ${document.data}")
+            if (document.data != null) {
+                Log.e(ContentValues.TAG, "DocumentSnapshot data: ${document.data}")
 
-                    val days: Int = getDaysBetweenDates(
-                        selectedDate.toString(),
-                        document.data!!.get("end_date").toString(),
-                        "yyyyMMdd"
-                    )
-                    if (days <= 0) {
-                        context?.let { showToastMsg(it.applicationContext, "SMS not able send.") }
-                        context?.let {
-                            showToastMsg(
-                                it.applicationContext, "Your Account has been expired."
-                            )
-                        }
-                    } else {
-                        sendMsg(context, number)
+                val days: Int = getDaysBetweenDates(
+                    selectedDate.toString(),
+                    document.data!!.get("end_date").toString(),
+                    "yyyyMMdd"
+                )
+                if (days <= 0) {
+                    context?.let { showToastMsg(it.applicationContext, "SMS not able send.") }
+                    context?.let {
+                        showToastMsg(
+                            it.applicationContext, "Your Account has been expired."
+                        )
                     }
-
                 } else {
-                    Log.e(ContentValues.TAG, "No such document")
-//                                    RegisterUser
+                    sendMsg(context, number)
                 }
-            }.addOnFailureListener { exception ->
-                Log.d(ContentValues.TAG, "get failed with ", exception)
+
+            } else {
+                Log.e(ContentValues.TAG, "No such document")
+//                                    RegisterUser
             }
+        }.addOnFailureListener { exception ->
+            Log.d(ContentValues.TAG, "get failed with ", exception)
+        }
     }
 
-    fun getDaysBetweenDates(
+    private fun getDaysBetweenDates(
         firstDateValue: String, secondDateValue: String, format: String
     ): Int {
         val sdf = SimpleDateFormat(format, Locale.getDefault())
@@ -298,23 +299,110 @@ class CallReciever : BroadcastReceiver() {
         return (((secondDate.time - firstDate.time) / (1000 * 60 * 60 * 24)) + 1).toInt()
     }
 
-    fun showPopUp(context: Context?) {
+    private fun showPopUp(context: Context?) {
+
+        val closeButton: ImageButton
+        val callButton: Button
+        val reminderButton: Button
+        val blackListButton: Button
+        val groupButton: Button
+        val textName: TextView
+        val textNumber: TextView
         val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         )
-        params.gravity = Gravity.TOP or Gravity.START
-        params.x = 0
-        params.y = 0
+        params.gravity = Gravity.BOTTOM or Gravity.END
+
 
         val inflater = context?.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val floatingView = inflater.inflate(R.layout.floating_window_layout, null)
 
+
+        closeButton = floatingView.findViewById(R.id.closeBtn)
+        textName = floatingView.findViewById(R.id.contactName)
+        textNumber = floatingView.findViewById(R.id.contactMobile)
         val windowManager = context?.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+
         windowManager.addView(floatingView, params)
+
+        closeButton.setOnClickListener {
+
+            windowManager.removeView(floatingView);
+        }
+        floatingView.setOnFocusChangeListener { v, hasFocus ->
+            if (!hasFocus) {
+                windowManager.removeView(floatingView)
+            }
+        }
+
+        val projection = arrayOf(
+            CallLog.Calls.CACHED_NAME,
+            CallLog.Calls.NUMBER,
+            CallLog.Calls.TYPE,
+            CallLog.Calls.DATE
+        )
+//
+//        // String sortOrder = ContactsContract.Contacts.DISPLAY_NAME + " COLLATE LOCALIZED ASC";
+//        val cursor: Cursor = context.contentResolver
+//            .query(
+//                CallLog.Calls.CONTENT_URI.buildUpon().appendQueryParameter(LIMIT_PARAM_KEY, "1")
+//                    .build(), projection, null, null, null
+//            )!!
+//        while (cursor.moveToNext()) {
+//            val name: String = cursor.getString(0)
+//            val number: String = cursor.getString(1)
+//            val type: String =
+//                cursor.getString(2)
+//            val time: String =
+//                cursor.getString(3)
+//
+//            Log.e("Name", name)
+//
+//            textName.setText("Name : $name Number :$number , type : $type")
+//        }
+//        cursor.close()
+//        getCallLogs(context)
+
+        val cr: ContentResolver = context!!.getContentResolver()
+        val c = cr.query(CallLog.Calls.CONTENT_URI, null, null, null, null)
+        var totalCall = 1
+        if (c != null) {
+            totalCall = 1 // intenger call log limit
+            if (c.moveToLast()) { //starts pulling logs from last - you can use moveToFirst() for first logs
+                for (j in 0 until totalCall) {
+                    val phNumber = c.getString(c.getColumnIndexOrThrow(CallLog.Calls.NUMBER))
+                    val n = c.getString(c.getColumnIndexOrThrow(CallLog.Calls.CACHED_NAME))
+                    val callDate = c.getString(c.getColumnIndexOrThrow(CallLog.Calls.DATE))
+                    val callDuration = c.getString(c.getColumnIndexOrThrow(CallLog.Calls.DURATION))
+                    val dateFormat = Date(java.lang.Long.valueOf(callDate))
+                    val callDayTimes = java.lang.String.valueOf(dateFormat)
+                    var direction: String? = null
+                    when (c.getString(c.getColumnIndexOrThrow(CallLog.Calls.TYPE)).toInt()) {
+                        CallLog.Calls.OUTGOING_TYPE -> direction = "OUTGOING"
+                        CallLog.Calls.INCOMING_TYPE -> direction = "INCOMING"
+                        CallLog.Calls.MISSED_TYPE -> direction = "MISSED"
+                        else -> {}
+                    }
+                    c.moveToPrevious() // if you used moveToFirst() for first logs, you should this line to moveToNext
+
+                    textNumber.text = "$phNumber"
+                    if(n!=null){
+                        textName.text = "Name : $n "
+                    }else{
+                        textName.text = "Unknown"
+                    }
+                }
+            }
+            c.close()
+        }
     }
 
 }
+
+
+
+

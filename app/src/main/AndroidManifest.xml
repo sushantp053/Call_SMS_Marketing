@@ -25,6 +25,14 @@
         android:theme="@style/Theme.CallSMSMarketing"
         tools:targetApi="31">
         <activity
+            android:name=".WhatsappActivity"
+            android:exported="false"
+            android:label="@string/title_activity_whatsapp"
+            android:theme="@style/Theme.CallSMSMarketing.NoActionBar" />
+        <activity
+            android:name=".AddWhatsapp"
+            android:exported="false" />
+        <activity
             android:name=".ComingSoon"
             android:exported="false" />
         <activity

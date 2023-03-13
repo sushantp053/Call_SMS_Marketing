@@ -48,6 +48,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore-ktx'
     implementation 'com.google.firebase:firebase-auth-ktx'
     implementation 'androidx.core:core-ktx:1.9.0'
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.5.3'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.5.3'
     kapt "androidx.room:room-compiler:2.5.0"
     implementation 'com.google.android.gms:play-services-safetynet:18.0.1'
 

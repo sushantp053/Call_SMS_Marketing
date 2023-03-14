@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.deecto.callSMSmarketing.database.DayWhatsappDao
 import com.deecto.callsmsmarketing.model.*
 import com.deecto.callsmsmarketing.utility.DATABASE_NAME
 
@@ -14,7 +13,7 @@ abstract class MessageDatabase : RoomDatabase() {
     abstract fun getWhatsappDao(): WhatsappDao
     abstract fun getPhoneCallDao(): PhoneCallDao
     abstract fun getDaySMSCounterDao(): DaySMSCounterDao
-    abstract fun getDayWhatsappCounterDao(): DayWhatsappDao
+    abstract fun getDayWhatsappCounterDao(): DayWhatsappCounterDao
 
 
     companion object {

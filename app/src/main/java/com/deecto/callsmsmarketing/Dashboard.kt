@@ -107,6 +107,10 @@ class Dashboard : AppCompatActivity() {
             var intent = Intent(this, ComingSoon::class.java)
             startActivity(intent)
         }
+        binding.cardSocialMediaImages.setOnClickListener {
+            var intent = Intent(this, ComingSoon::class.java)
+            startActivity(intent)
+        }
         binding.cardAutoDialer.setOnClickListener {
             var intent = Intent(this, ComingSoon::class.java)
             startActivity(intent)

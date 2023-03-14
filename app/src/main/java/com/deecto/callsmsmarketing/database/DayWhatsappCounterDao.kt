@@ -1,4 +1,4 @@
-package com.deecto.callSMSmarketing.database
+package com.deecto.callsmsmarketing.database
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -6,7 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.deecto.callsmsmarketing.model.DayWhatsappCounter
 @Dao
-interface DayWhatsappDao{
+interface DayWhatsappCounterDao{
 @Insert(onConflict = OnConflictStrategy.REPLACE)
 suspend fun insert(dayWhatsappCounter: DayWhatsappCounter)
 

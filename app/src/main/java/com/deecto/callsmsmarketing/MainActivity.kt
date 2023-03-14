@@ -82,9 +82,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         val sharedPref = this.getSharedPreferences("Call", Context.MODE_PRIVATE) ?: return
-        val dailySms = sharedPref.getBoolean("daily", false)
-        val incoming = sharedPref.getBoolean("incoming", false)
-        val outgoing = sharedPref.getBoolean("outgoing", false)
+        val dailySms = sharedPref.getBoolean("daily", true)
+        val incoming = sharedPref.getBoolean("incoming", true)
+        val outgoing = sharedPref.getBoolean("outgoing", true)
         limit = sharedPref.getInt("limit", 100)
 
         binding.dailyOne.isChecked = dailySms

@@ -4,7 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import com.deecto.callSMSmarketing.database.DayWhatsappDao
+import com.deecto.callsmsmarketing.database.DayWhatsappCounterDao
 import com.deecto.callsmsmarketing.database.MessageDatabase
 import com.deecto.callsmsmarketing.database.WhatsappDao
 import com.deecto.callsmsmarketing.databinding.ActivityWhatsAppAutoBinding
@@ -43,7 +43,7 @@ class WhatsAppAuto : AppCompatActivity() {
             val current = LocalDateTime.now()
             val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
             val formattedDate = current.format(formatter)
-            var dayWhatsappCounterDao: DayWhatsappDao = database.getDayWhatsappCounterDao()
+            var dayWhatsappCounterDao: DayWhatsappCounterDao = database.getDayWhatsappCounterDao()
             try {
                 val dayDetails = dayWhatsappCounterDao.getDayCount(formattedDate)
                 val totalCount = dayWhatsappCounterDao.getTotalCount()

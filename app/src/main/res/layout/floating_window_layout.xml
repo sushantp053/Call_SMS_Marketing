@@ -9,7 +9,7 @@
     android:elevation="5dp"
     app:cardCornerRadius="8dp">
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -83,6 +83,15 @@
                 android:text="Add to Group" />
         </LinearLayout>
 
+        <Button
+            android:visibility="gone"
+            android:id="@+id/addToContactButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginHorizontal="4dp"
+            android:layout_marginTop="16dp"
+            android:text="Add to Contact" />
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -100,7 +109,6 @@
             android:text="Send Whatsapp Message" />
 
         <Button
-            android:background="#4CAF50"
             android:id="@+id/sendWhatsappBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

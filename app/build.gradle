@@ -4,6 +4,7 @@ plugins {
     id 'kotlin-kapt'
     id 'kotlin-android'
     id 'com.google.gms.google-services'
+    id 'com.google.firebase.crashlytics'
 }
 
 android {
@@ -69,4 +70,8 @@ dependencies {
     implementation 'com.github.judemanutd:autostarter:1.1.0'
     implementation 'com.google.android.gms:play-services-auth:20.4.1'
 
+    implementation platform('com.google.firebase:firebase-bom:31.2.3')
+
+    implementation 'com.google.firebase:firebase-crashlytics-ktx'
+    implementation 'com.google.firebase:firebase-analytics-ktx'
 }

@@ -1,7 +1,6 @@
 package com.deecto.callsmsmarketing.services
 
 import android.Manifest
-import android.R.attr
 import android.content.*
 import android.content.pm.PackageManager
 import android.graphics.PixelFormat
@@ -13,13 +12,9 @@ import android.telephony.SmsManager
 import android.telephony.TelephonyManager
 import android.util.Log
 import android.view.*
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
-import com.deecto.callsmsmarketing.database.DayWhatsappCounterDao
 import com.deecto.callsmsmarketing.R
 import com.deecto.callsmsmarketing.database.*
 import com.deecto.callsmsmarketing.model.DaySMSCounter
@@ -39,7 +34,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 
-class CallReciever : BroadcastReceiver() {
+class CallReceiver : BroadcastReceiver() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var database: MessageDatabase
@@ -50,10 +45,11 @@ class CallReciever : BroadcastReceiver() {
         auth = Firebase.auth
         if (auth.currentUser != null) {
 
-            var sharedPref = context?.getSharedPreferences("Call", Context.MODE_PRIVATE) ?: return
+            val sharedPref = context?.getSharedPreferences("Call", Context.MODE_PRIVATE) ?: return
             val dailySms = sharedPref.getBoolean("daily", true)
             val incoming = sharedPref.getBoolean("incoming", true)
             val outgoing = sharedPref.getBoolean("outgoing", true)
+            val popup = sharedPref.getBoolean("popup", true)
 
             if (ActivityCompat.checkSelfPermission(
                     context, Manifest.permission.READ_SMS
@@ -67,6 +63,8 @@ class CallReciever : BroadcastReceiver() {
             }
 
             if (intent?.getStringExtra(TelephonyManager.EXTRA_STATE) == TelephonyManager.EXTRA_STATE_OFFHOOK) {
+                sharedPref.edit().putBoolean("popup", true)
+                    .apply()
                 val number: String =
                     intent!!.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER).toString()
 
@@ -75,11 +73,13 @@ class CallReciever : BroadcastReceiver() {
                         if (dailySms) {
                             lastCallCompare(context, number, false)
                         } else {
-                            checkUserData(context, number)
+                            checkUserData(context, number, 1)
                         }
                     }
                 }
             } else if (intent?.getStringExtra(TelephonyManager.EXTRA_STATE) == TelephonyManager.EXTRA_STATE_RINGING) {
+                sharedPref.edit().putBoolean("popup", true)
+                    .apply()
                 val number: String =
                     intent!!.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER).toString()
                 if (incoming) {
@@ -88,13 +88,16 @@ class CallReciever : BroadcastReceiver() {
                             lastCallCompare(context, number, true)
                         } else {
 //                            sendMsg(context, number)
-                            checkUserData(context, number)
+                            checkUserData(context, number, 1)
                         }
                     }
                 }
             } else if ((intent?.getStringExtra(TelephonyManager.EXTRA_STATE) == TelephonyManager.EXTRA_STATE_IDLE)) {
-                Toast.makeText(context?.applicationContext, "Idle State", Toast.LENGTH_SHORT).show()
-                showPopUp(context)
+                Toast.makeText(context?.applicationContext, "Idle State $popup", Toast.LENGTH_SHORT)
+                    .show()
+                if (popup) {
+                    checkUserData(context, "1", 2)
+                }
             }
         } else {
             Toast.makeText(
@@ -117,62 +120,99 @@ class CallReciever : BroadcastReceiver() {
         try {
             if (number.length >= 10) {
                 if (number.length == 10) {
-                    var a = Integer.parseInt(number.subSequence(0, 2).toString())
+                    val a = Integer.parseInt(number.subSequence(0, 2).toString())
                     if (a > 55) {
                         CoroutineScope(Dispatchers.Default).launch {
-                            var messageDio: MessageDao = database.getMessageDao()
-                            var msg = messageDio.getDefaultMessage(true)
+                            val messageDio: MessageDao = database.getMessageDao()
+                            val msg = messageDio.getDefaultMessage(true)
                             val smsManager: SmsManager = SmsManager.getDefault()
 
                             val current = LocalDateTime.now()
                             val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
                             val formattedDate = current.format(formatter)
-                            var daySMSCounterDao: DaySMSCounterDao = database.getDaySMSCounterDao()
+                            val daySMSCounterDao: DaySMSCounterDao = database.getDaySMSCounterDao()
                             val dayDetails = daySMSCounterDao.getDayCount(formattedDate)
 
-                            var sharedPref =
-                                context?.getSharedPreferences("Call", Context.MODE_PRIVATE)
+                            val sharedPref =
+                                context.getSharedPreferences("Call", Context.MODE_PRIVATE)
                             val limit = sharedPref!!.getInt("limit", 100)
-                            if (limit > dayDetails.counter!!) {
-                                // on below line we are sending text message.
-                                smsManager.sendTextMessage(
-                                    number, null, msg.message, null, null
-                                )
-                                changeCounter(context)
+                            if (dayDetails.counter == null) {
+                                if (limit > 0) {
+                                    smsManager.sendTextMessage(
+                                        number, null, msg.message, null, null
+                                    )
+                                    changeCounter(context)
+                                } else {
+                                    Toast.makeText(
+                                        context.applicationContext,
+                                        "Your SMS sending limit has reached. ",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+
+                                }
                             } else {
-                                Toast.makeText(
-                                    context,
-                                    "Your Limit has been over",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                if (limit > dayDetails.counter!!) {
+                                    smsManager.sendTextMessage(
+                                        number, null, msg.message, null, null
+                                    )
+
+                                    changeCounter(context)
+                                } else {
+                                    Toast.makeText(
+                                        context.applicationContext,
+                                        "Your SMS sending limit has reached. ",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             }
                         }
                     }
 
-                } else if (number.subSequence(0, 3).equals("+91")) {
+                } else if (number.subSequence(0, 3) == "+91") {
 //
                     CoroutineScope(Dispatchers.Default).launch {
-                        var messageDio: MessageDao = database.getMessageDao()
-                        var msg = messageDio.getDefaultMessage(true)
+                        val messageDio: MessageDao = database.getMessageDao()
+                        val msg = messageDio.getDefaultMessage(true)
                         val smsManager: SmsManager = SmsManager.getDefault()
                         // on below line we are sending text message.
 
                         val current = LocalDateTime.now()
                         val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
                         val formattedDate = current.format(formatter)
-                        var daySMSCounterDao: DaySMSCounterDao = database.getDaySMSCounterDao()
+                        val daySMSCounterDao: DaySMSCounterDao = database.getDaySMSCounterDao()
                         val dayDetails = daySMSCounterDao.getDayCount(formattedDate)
-
-                        var sharedPref = context?.getSharedPreferences("Call", Context.MODE_PRIVATE)
+                        val sharedPref = context?.getSharedPreferences("Call", Context.MODE_PRIVATE)
                         val limit = sharedPref!!.getInt("limit", 100)
-                        if (limit > dayDetails.counter!!) {
-                            smsManager.sendTextMessage(
-                                number, null, msg.message, null, null
-                            )
+                        if (dayDetails.counter == null) {
+                            if (limit > 0) {
+                                smsManager.sendTextMessage(
+                                    number, null, msg.message, null, null
+                                )
+                                changeCounter(context)
+                            } else {
+                                Toast.makeText(
+                                    context.applicationContext,
+                                    "Your SMS sending limit has reached. ",
+                                    Toast.LENGTH_SHORT
+                                ).show()
 
-                            changeCounter(context)
+                            }
                         } else {
+                            if (limit > dayDetails.counter!!) {
+                                smsManager.sendTextMessage(
+                                    number, null, msg.message, null, null
+                                )
+
+                                changeCounter(context)
+                            } else {
+                                Toast.makeText(
+                                    context.applicationContext,
+                                    "Your SMS sending limit has reached. ",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         }
+
                     }
                 }
             }
@@ -186,8 +226,8 @@ class CallReciever : BroadcastReceiver() {
         database = MessageDatabase.getDatabase(context!!.applicationContext)
 
         CoroutineScope(Dispatchers.Default).launch {
-            var phoneCallDao: PhoneCallDao = database.getPhoneCallDao()
-            var phoneCallDetails = phoneCallDao.getLastCall(number)
+            val phoneCallDao: PhoneCallDao = database.getPhoneCallDao()
+            val phoneCallDetails = phoneCallDao.getLastCall(number)
             val current = LocalDateTime.now()
 
             val formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
@@ -199,7 +239,7 @@ class CallReciever : BroadcastReceiver() {
                     parseLong(formatted.toString()) - parseLong(phoneCallDetails.outgoing_time)
                 if (incomingDifferance > (24 * 60 * 60) && outgoingDifferance > (24 * 60 * 60)) {
 //                    sendMsg(context, number)
-                    checkUserData(context, number)
+                    checkUserData(context, number, 1)
                 } else {
                     Log.e("Hours are Lessor", "Last Call done in 24 hours")
                 }
@@ -211,8 +251,8 @@ class CallReciever : BroadcastReceiver() {
             } catch (e: Exception) {
                 Log.e("Time comparing error", e.message.toString())
 //                sendMsg(context, number)
-                checkUserData(context, number)
-                var phoneCall: PhoneCall =
+                checkUserData(context, number, 1)
+                val phoneCall: PhoneCall =
                     PhoneCall(null, number, formatted, formatted, "active", 1)
                 phoneCallDao.insert(phoneCall)
             }
@@ -228,21 +268,20 @@ class CallReciever : BroadcastReceiver() {
         val formattedDate = current.format(formatter)
 
         CoroutineScope(Dispatchers.Default).launch {
-            var daySMSCounterDao: DaySMSCounterDao = database.getDaySMSCounterDao()
+            val daySMSCounterDao: DaySMSCounterDao = database.getDaySMSCounterDao()
             try {
-                val dayDetails = daySMSCounterDao.getDayCount(formattedDate)
                 daySMSCounterDao.updateDayCount(formattedDate.toString())
-
 
             } catch (e: Exception) {
 
-                var daySMSCounter: DaySMSCounter = DaySMSCounter(null, formattedDate.toString(), 1)
+                val daySMSCounter: DaySMSCounter = DaySMSCounter(null, formattedDate.toString(), 1)
                 daySMSCounterDao.insert(
                     daySMSCounter
                 )
             }
         }
     }
+
     private fun changeWhatsAppCounter(context: Context?) {
         database = MessageDatabase.getDatabase(context!!.applicationContext)
         val current = LocalDateTime.now()
@@ -250,14 +289,14 @@ class CallReciever : BroadcastReceiver() {
         val formattedDate = current.format(formatter)
 
         CoroutineScope(Dispatchers.Default).launch {
-            var dayWhatsappCounterDao: DayWhatsappCounterDao = database.getDayWhatsappCounterDao()
+            val dayWhatsappCounterDao: DayWhatsappCounterDao = database.getDayWhatsappCounterDao()
             try {
-                val dayDetails = dayWhatsappCounterDao.getDayCount(formattedDate)
                 dayWhatsappCounterDao.updateDayCount(formattedDate.toString())
 
             } catch (e: Exception) {
 
-                var dayWhatsAppCounter: DayWhatsappCounter = DayWhatsappCounter(null, formattedDate.toString(), 1)
+                val dayWhatsAppCounter =
+                    DayWhatsappCounter(null, formattedDate.toString(), 1)
                 dayWhatsappCounterDao.insert(
                     dayWhatsAppCounter
                 )
@@ -265,7 +304,7 @@ class CallReciever : BroadcastReceiver() {
         }
     }
 
-    private fun checkUserData(context: Context?, number: String) {
+    private fun checkUserData(context: Context?, number: String, type: Int) {
 
         val current = LocalDateTime.now()
         val formatter2 = DateTimeFormatter.ofPattern("yyyyMMdd")
@@ -281,7 +320,7 @@ class CallReciever : BroadcastReceiver() {
 
                 val days: Int = getDaysBetweenDates(
                     selectedDate.toString(),
-                    document.data!!.get("end_date").toString(),
+                    document.data!!["end_date"].toString(),
                     "yyyyMMdd"
                 )
                 if (days <= 0) {
@@ -292,7 +331,11 @@ class CallReciever : BroadcastReceiver() {
                         )
                     }
                 } else {
-                    sendMsg(context, number)
+                    if (type == 1) {
+                        sendMsg(context, number)
+                    } else {
+                        showPopUp(context)
+                    }
                 }
 
             } else {
@@ -319,7 +362,11 @@ class CallReciever : BroadcastReceiver() {
 
     private fun showPopUp(context: Context?) {
 
-        var database: MessageDatabase = MessageDatabase.getDatabase(context!!.applicationContext)
+        val sharedPref = context?.getSharedPreferences("Call", Context.MODE_PRIVATE) ?: return
+        sharedPref.edit().putBoolean("popup", false)
+            .apply()
+
+        val database: MessageDatabase = MessageDatabase.getDatabase(context!!.applicationContext)
         var whatsMsg: String = "HI"
 
         val closeButton: ImageButton
@@ -333,7 +380,6 @@ class CallReciever : BroadcastReceiver() {
         val textName: TextView
         val textNumber: TextView
         val textMsg: TextView
-
 
         var phoneNumber: String = auth.currentUser?.phoneNumber.toString()
 
@@ -350,7 +396,7 @@ class CallReciever : BroadcastReceiver() {
         val inflater = context?.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val floatingView = inflater.inflate(R.layout.floating_window_layout, null)
 
-        floatingView.isFocusable = true
+//        floatingView.isFocusable = true
 
         callButton = floatingView.findViewById(R.id.makeACallBtn)
         reminderButton = floatingView.findViewById(R.id.reminderBtn)
@@ -363,14 +409,38 @@ class CallReciever : BroadcastReceiver() {
         textName = floatingView.findViewById(R.id.contactName)
         textNumber = floatingView.findViewById(R.id.contactMobile)
         textMsg = floatingView.findViewById(R.id.messageText)
-        val windowManager = context?.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+
+        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
         windowManager.addView(floatingView, params)
 
+//        floatingView.setOnFocusChangeListener { v, hasFocus ->
+//            if (!hasFocus) {
+//                sharedPref.edit().putBoolean("popup", true)
+//                    .apply()
+//                windowManager.removeView(floatingView)
+//            }
+//        }
+        floatingView.setOnKeyListener { v, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_HOME) {
+                Log.e("Error", "Home Key pressed")
+                sharedPref.edit().putBoolean("popup", true)
+                    .apply()
+                windowManager.removeView(floatingView)
+            } else if (keyCode == KeyEvent.KEYCODE_BACK) {
+                Log.e("Error", "Back Key pressed")
+                sharedPref.edit().putBoolean("popup", true)
+                    .apply()
+                windowManager.removeView(floatingView)
+            }
+            Log.e("Key code", keyCode.toString())
+            return@setOnKeyListener true
+
+        }
         CoroutineScope(Dispatchers.Default).launch {
-            var messageDio: WhatsappDao = database.getWhatsappDao()
-            var msg = messageDio.getDefaultWhatsappMessage(true)
+            val messageDio: WhatsappDao = database.getWhatsappDao()
             try {
+                val msg = messageDio.getDefaultWhatsappMessage(true)
                 textMsg.text = msg.message.toString()
                 whatsMsg = msg.message.toString()
             } catch (e: Exception) {
@@ -379,27 +449,22 @@ class CallReciever : BroadcastReceiver() {
         }
 
         closeButton.setOnClickListener {
+            sharedPref.edit().putBoolean("popup", true)
+                .apply()
+            windowManager.removeView(floatingView)
+        }
 
-            windowManager.removeView(floatingView);
-        }
-        floatingView.setOnFocusChangeListener { v, hasFocus ->
-            if (!hasFocus) {
-                windowManager.removeView(floatingView)
-            }
-        }
-        val cr: ContentResolver = context!!.getContentResolver()
+        val cr: ContentResolver = context.contentResolver
         val c = cr.query(CallLog.Calls.CONTENT_URI, null, null, null, null)
         var totalCall = 1
         if (c != null) {
-            totalCall = 1 // intenger call log limit
-            if (c.moveToLast()) { //starts pulling logs from last - you can use moveToFirst() for first logs
+            totalCall = 1 // integer call log limit
+            //starts pulling logs from last - you can use moveToFirst() for first logs
+            if (c.moveToLast()) {
                 for (j in 0 until totalCall) {
                     val phNumber = c.getString(c.getColumnIndexOrThrow(CallLog.Calls.NUMBER))
                     val n = c.getString(c.getColumnIndexOrThrow(CallLog.Calls.CACHED_NAME))
                     val callDate = c.getString(c.getColumnIndexOrThrow(CallLog.Calls.DATE))
-                    val callDuration = c.getString(c.getColumnIndexOrThrow(CallLog.Calls.DURATION))
-                    val dateFormat = Date(java.lang.Long.valueOf(callDate))
-                    val callDayTimes = java.lang.String.valueOf(dateFormat)
                     var direction: String? = null
                     when (c.getString(c.getColumnIndexOrThrow(CallLog.Calls.TYPE)).toInt()) {
                         CallLog.Calls.OUTGOING_TYPE -> direction = "OUTGOING"
@@ -408,8 +473,8 @@ class CallReciever : BroadcastReceiver() {
                         else -> {}
                     }
                     c.moveToPrevious() // if you used moveToFirst() for first logs, you should this line to moveToNext
-                    phoneNumber = "$phNumber"
-                    textNumber.text = "$phNumber"
+                    phoneNumber = phNumber
+                    textNumber.text = phNumber
                     if (n != null) {
                         textName.text = "Name : $n "
                     } else {
@@ -421,41 +486,49 @@ class CallReciever : BroadcastReceiver() {
             c.close()
         }
         callButton.setOnClickListener {
-
-            windowManager.removeView(floatingView)
+            sharedPref.edit().putBoolean("popup", true)
+                .apply()
             val dialIntent = Intent(Intent.ACTION_DIAL)
             dialIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            dialIntent.data = Uri.parse("tel:" + phoneNumber)
+            dialIntent.data = Uri.parse("tel:$phoneNumber")
             context.applicationContext.startActivity(dialIntent)
+
+            windowManager.removeView(floatingView)
         }
         reminderButton.setOnClickListener { }
         blackListButton.setOnClickListener { }
         groupButton.setOnClickListener { }
         whatsAppButton.setOnClickListener {
+
+            sharedPref.edit().putBoolean("popup", true)
+                .apply()
             changeWhatsAppCounter(context)
-            windowManager.removeView(floatingView)
             if (phoneNumber.subSequence(0, 3).equals("+91")) {
 
                 phoneNumber.trim()
                 phoneNumber = phoneNumber.removePrefix("+91")
-                val u: String = "https://wa.me/91" + phoneNumber+"?text=$whatsMsg"
+                val u = "https://wa.me/91$phoneNumber?text=$whatsMsg"
                 val webIntent: Intent = Uri.parse(u).let { webpage ->
                     Intent(Intent.ACTION_VIEW, webpage)
                 }
                 webIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 context.startActivity(webIntent)
             } else {
-                val u: String = "https://wa.me/91" + phoneNumber.trim()+"?text=$whatsMsg"
+                val u: String = "https://wa.me/91" + phoneNumber.trim() + "?text=$whatsMsg"
                 val webIntent: Intent = Uri.parse(u).let { webpage ->
                     Intent(Intent.ACTION_VIEW, webpage)
                 }
                 webIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 context.startActivity(webIntent)
             }
+            windowManager.removeView(floatingView)
+
         }
         saveContactButton.setOnClickListener {
 
-            windowManager.removeView(floatingView)
+            sharedPref.edit().putBoolean("popup", true)
+                .apply()
+
             val intent = Intent(
                 ContactsContract.Intents.SHOW_OR_CREATE_CONTACT,
                 Uri.parse("tel:" + phoneNumber)
@@ -463,6 +536,7 @@ class CallReciever : BroadcastReceiver() {
             intent.putExtra(ContactsContract.Intents.EXTRA_FORCE_CREATE, true)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             context.startActivity(intent)
+            windowManager.removeView(floatingView)
         }
     }
 }

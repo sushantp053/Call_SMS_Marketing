@@ -32,8 +32,8 @@ class WhatsAppAuto : AppCompatActivity() {
 
         CoroutineScope(Dispatchers.Default).launch {
             var messageDio: WhatsappDao = database.getWhatsappDao()
-            var msg = messageDio.getDefaultWhatsappMessage(true)
             try {
+                var msg = messageDio.getDefaultWhatsappMessage(true)
                 binding.textViewCurrentMsg.text = msg.message
             } catch (e: Exception) {
                 Log.e("set text error", e.toString())

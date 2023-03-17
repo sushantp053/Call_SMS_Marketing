@@ -4,20 +4,21 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.PowerManager
 import android.provider.Settings
-import androidx.annotation.RequiresApi
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import com.deecto.callsmsmarketing.databinding.ActivityMainBinding
+import androidx.appcompat.app.AppCompatActivity
 import com.deecto.callsmsmarketing.databinding.ActivityPermissionBinding
 import com.judemanutd.autostarter.AutoStartPermissionHelper
 
-class PermissionActivity : AppCompatActivity() {
+
+private const val PERMISSION_REQUEST_CODE = 1
+open class PermissionActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityPermissionBinding
 
-    private val PERMISSION_REQUEST_CODE = 1
     private fun showDialog(titleText: String, messageText: String) {
         with(AlertDialog.Builder(this)) {
             title = titleText
@@ -57,7 +58,27 @@ class PermissionActivity : AppCompatActivity() {
         binding.cardAutoPlayPermission.setOnClickListener {
             AutoStartPermissionHelper.getInstance().getAutoStartPermission(this)
         }
+        binding.cardBatteryPermission.setOnClickListener {
+            ignoreBatteryOptimization()
+        }
 
+    }
+
+    open fun ignoreBatteryOptimization() {
+        val intent = Intent()
+        val packageName = packageName
+        val pm = getSystemService(POWER_SERVICE) as PowerManager
+        if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+            intent.action = Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+            intent.data = Uri.parse("package:$packageName")
+            startActivity(intent)
+        } else {
+            Toast.makeText(
+                this@PermissionActivity,
+                "Battery optimization accepted",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
     }
 
     @Deprecated("Deprecated in Java")
@@ -75,6 +96,7 @@ class PermissionActivity : AppCompatActivity() {
             super.onActivityResult(requestCode, resultCode, data)
         }
     }
+
     private fun Context.drawOverOtherAppsEnabled(): Boolean {
         return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             true

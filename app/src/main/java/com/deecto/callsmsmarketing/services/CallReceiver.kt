@@ -136,6 +136,72 @@ class CallReceiver : BroadcastReceiver() {
                             val sharedPref =
                                 context.getSharedPreferences("Call", Context.MODE_PRIVATE)
                             val limit = sharedPref!!.getInt("limit", 100)
+                            try {
+                                if (dayDetails.counter == null) {
+                                    if (limit > 0) {
+                                        smsManager.sendTextMessage(
+                                            number, null, msg.message, null, null
+                                        )
+                                        changeCounter(context)
+                                    } else {
+                                        Toast.makeText(
+                                            context.applicationContext,
+                                            "Your SMS sending limit has reached. ",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+
+                                    }
+                                } else {
+                                    if (limit > dayDetails.counter!!) {
+                                        smsManager.sendTextMessage(
+                                            number, null, msg.message, null, null
+                                        )
+
+                                        changeCounter(context)
+                                    } else {
+                                        Toast.makeText(
+                                            context.applicationContext,
+                                            "Your SMS sending limit has reached. ",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            }catch(e: NullPointerException){
+                                Log.e("Exception 170", e.toString())
+                                if (limit > 0) {
+                                    smsManager.sendTextMessage(
+                                        number, null, msg.message, null, null
+                                    )
+                                    changeCounter(context)
+                                } else {
+                                    Toast.makeText(
+                                        context.applicationContext,
+                                        "Your SMS sending limit has reached. ",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+
+                                }
+
+                            }
+                        }
+                    }
+
+                } else if (number.subSequence(0, 3) == "+91") {
+//
+                    CoroutineScope(Dispatchers.Default).launch {
+                        val messageDio: MessageDao = database.getMessageDao()
+                        val msg = messageDio.getDefaultMessage(true)
+                        val smsManager: SmsManager = SmsManager.getDefault()
+                        // on below line we are sending text message.
+
+                        val current = LocalDateTime.now()
+                        val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+                        val formattedDate = current.format(formatter)
+                        val daySMSCounterDao: DaySMSCounterDao = database.getDaySMSCounterDao()
+                        val dayDetails = daySMSCounterDao.getDayCount(formattedDate)
+                        val sharedPref = context?.getSharedPreferences("Call", Context.MODE_PRIVATE)
+                        val limit = sharedPref!!.getInt("limit", 100)
+                        try {
                             if (dayDetails.counter == null) {
                                 if (limit > 0) {
                                     smsManager.sendTextMessage(
@@ -165,25 +231,8 @@ class CallReceiver : BroadcastReceiver() {
                                     ).show()
                                 }
                             }
-                        }
-                    }
-
-                } else if (number.subSequence(0, 3) == "+91") {
-//
-                    CoroutineScope(Dispatchers.Default).launch {
-                        val messageDio: MessageDao = database.getMessageDao()
-                        val msg = messageDio.getDefaultMessage(true)
-                        val smsManager: SmsManager = SmsManager.getDefault()
-                        // on below line we are sending text message.
-
-                        val current = LocalDateTime.now()
-                        val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
-                        val formattedDate = current.format(formatter)
-                        val daySMSCounterDao: DaySMSCounterDao = database.getDaySMSCounterDao()
-                        val dayDetails = daySMSCounterDao.getDayCount(formattedDate)
-                        val sharedPref = context?.getSharedPreferences("Call", Context.MODE_PRIVATE)
-                        val limit = sharedPref!!.getInt("limit", 100)
-                        if (dayDetails.counter == null) {
+                        }catch (e : NullPointerException){
+                            Log.e("Exception 235", e.toString())
                             if (limit > 0) {
                                 smsManager.sendTextMessage(
                                     number, null, msg.message, null, null
@@ -197,21 +246,8 @@ class CallReceiver : BroadcastReceiver() {
                                 ).show()
 
                             }
-                        } else {
-                            if (limit > dayDetails.counter!!) {
-                                smsManager.sendTextMessage(
-                                    number, null, msg.message, null, null
-                                )
-
-                                changeCounter(context)
-                            } else {
-                                Toast.makeText(
-                                    context.applicationContext,
-                                    "Your SMS sending limit has reached. ",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
                         }
+
 
                     }
                 }
@@ -272,9 +308,9 @@ class CallReceiver : BroadcastReceiver() {
             try {
                 daySMSCounterDao.updateDayCount(formattedDate.toString())
 
-            } catch (e: Exception) {
-
-                val daySMSCounter: DaySMSCounter = DaySMSCounter(null, formattedDate.toString(), 1)
+            } catch (e: NullPointerException) {
+                Log.e("Exception 312", e.toString())
+                val daySMSCounter = DaySMSCounter(null, formattedDate.toString(), 1)
                 daySMSCounterDao.insert(
                     daySMSCounter
                 )
@@ -293,8 +329,8 @@ class CallReceiver : BroadcastReceiver() {
             try {
                 dayWhatsappCounterDao.updateDayCount(formattedDate.toString())
 
-            } catch (e: Exception) {
-
+            } catch (e: NullPointerException) {
+                Log.e("Whatsapp Exception 333", e.toString())
                 val dayWhatsAppCounter =
                     DayWhatsappCounter(null, formattedDate.toString(), 1)
                 dayWhatsappCounterDao.insert(
@@ -496,7 +532,19 @@ class CallReceiver : BroadcastReceiver() {
             windowManager.removeView(floatingView)
         }
         reminderButton.setOnClickListener { }
-        blackListButton.setOnClickListener { }
+        blackListButton.setOnClickListener {
+            sharedPref.edit().putBoolean("popup", true)
+                .apply()
+
+            val intent = Intent(
+                ContactsContract.Intents.SHOW_OR_CREATE_CONTACT,
+                Uri.parse("tel:" + phoneNumber)
+            )
+            intent.putExtra(ContactsContract.Intents.EXTRA_FORCE_CREATE, true)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            context.startActivity(intent)
+            windowManager.removeView(floatingView)
+        }
         groupButton.setOnClickListener { }
         whatsAppButton.setOnClickListener {
 
@@ -540,7 +588,6 @@ class CallReceiver : BroadcastReceiver() {
         }
     }
 }
-
 
 
 

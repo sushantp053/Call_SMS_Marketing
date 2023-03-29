@@ -52,10 +52,11 @@ class MainActivity : AppCompatActivity() {
 
         CoroutineScope(Dispatchers.Default).launch {
             var messageDio: MessageDao = database.getMessageDao()
-            var msg = messageDio.getDefaultMessage(true)
             try {
+                var msg = messageDio.getDefaultMessage(true)
                 binding.textViewCurrentMsg.text = msg.message
             } catch (e: Exception) {
+                binding.textViewCurrentMsg.text = "No Message Added"
                 Log.e("set text error", e.toString())
             }
         }

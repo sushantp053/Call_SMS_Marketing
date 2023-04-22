@@ -1,8 +1,10 @@
 package com.deecto.callsmsmarketing
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.deecto.callsmsmarketing.database.DayWhatsappCounterDao
 import com.deecto.callsmsmarketing.database.MessageDatabase
@@ -66,6 +68,38 @@ class WhatsAppAuto : AppCompatActivity() {
             var intent = Intent(this, WhatsappActivity::class.java)
             startActivity(intent)
         }
+        val sharedPref = this.getSharedPreferences("Call", Context.MODE_PRIVATE) ?: return
+        val dailySms = sharedPref.getBoolean("whats_daily", true)
+        val incoming = sharedPref.getBoolean("whats_incoming", true)
+        val outgoing = sharedPref.getBoolean("whats_outgoing", true)
+        val attachment = sharedPref.getBoolean("whats_attachment", true)
+
+        when(sharedPref.getInt("whats",R.id.btnOff)){
+            R.id.btnOff -> binding.toggleButtonGroup.check(R.id.btnOff)
+            R.id.btnAsk -> binding.toggleButtonGroup.check(R.id.btnAsk)
+            R.id.btnAuto -> binding.toggleButtonGroup.check(R.id.btnAuto)
+        }
+
+        binding.dailyOne.isChecked = dailySms
+        binding.incomingCallSwitch.isChecked = incoming
+        binding.outGoingCallSwitch.isChecked = outgoing
+//        binding.limitText.text = "$limit SMS"
+
+
+        binding.toggleButtonGroup.addOnButtonCheckedListener { toggleButtonGroup, checkedId, isChecked ->
+
+            if (isChecked) {
+                when (checkedId) {
+                    R.id.btnOff -> sharedPref.edit().putInt("whats", R.id.btnOff).apply()
+                    R.id.btnAsk -> sharedPref.edit().putInt("whats", R.id.btnAsk).apply()
+                    R.id.btnAuto -> sharedPref.edit().putInt("whats", R.id.btnAuto).apply()
+                }
+            }
+        }
+    }
+
+    private fun showToast(str: String) {
+        Toast.makeText(this, str, Toast.LENGTH_SHORT).show()
 
     }
 }

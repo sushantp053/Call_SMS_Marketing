@@ -51,6 +51,7 @@ class CallReceiver : BroadcastReceiver() {
             val outgoing = sharedPref.getBoolean("outgoing", true)
             val popup = sharedPref.getBoolean("popup", true)
 
+
             if (ActivityCompat.checkSelfPermission(
                     context, Manifest.permission.READ_SMS
                 ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
@@ -96,7 +97,9 @@ class CallReceiver : BroadcastReceiver() {
                 Toast.makeText(context?.applicationContext, "Idle State $popup", Toast.LENGTH_SHORT)
                     .show()
                 if (popup) {
-                    checkUserData(context, "1", 2)
+                    CoroutineScope(Dispatchers.Default).launch {
+                        checkUserData(context, "0", 2)
+                    }
                 }
             }
         } else {
@@ -116,6 +119,7 @@ class CallReceiver : BroadcastReceiver() {
 
     private fun sendMsg(context: Context?, number: String) {
 
+        Log.e("Call Ended ", number)
         database = MessageDatabase.getDatabase(context!!.applicationContext)
         try {
             if (number.length >= 10) {
@@ -156,7 +160,6 @@ class CallReceiver : BroadcastReceiver() {
                                         smsManager.sendTextMessage(
                                             number, null, msg.message, null, null
                                         )
-
                                         changeCounter(context)
                                     } else {
                                         Toast.makeText(
@@ -166,7 +169,8 @@ class CallReceiver : BroadcastReceiver() {
                                         ).show()
                                     }
                                 }
-                            }catch(e: NullPointerException){
+
+                            } catch (e: NullPointerException) {
                                 Log.e("Exception 170", e.toString())
                                 if (limit > 0) {
                                     smsManager.sendTextMessage(
@@ -231,7 +235,7 @@ class CallReceiver : BroadcastReceiver() {
                                     ).show()
                                 }
                             }
-                        }catch (e : NullPointerException){
+                        } catch (e: NullPointerException) {
                             Log.e("Exception 235", e.toString())
                             if (limit > 0) {
                                 smsManager.sendTextMessage(
@@ -274,7 +278,6 @@ class CallReceiver : BroadcastReceiver() {
                 val outgoingDifferance =
                     parseLong(formatted.toString()) - parseLong(phoneCallDetails.outgoing_time)
                 if (incomingDifferance > (24 * 60 * 60) && outgoingDifferance > (24 * 60 * 60)) {
-//                    sendMsg(context, number)
                     checkUserData(context, number, 1)
                 } else {
                     Log.e("Hours are Lessor", "Last Call done in 24 hours")
@@ -346,13 +349,17 @@ class CallReceiver : BroadcastReceiver() {
         val formatter2 = DateTimeFormatter.ofPattern("yyyyMMdd")
         val selectedDate = current.format(formatter2)
 
+        val sharedPref = context?.getSharedPreferences("Call", Context.MODE_PRIVATE) ?: return
+        val whats = sharedPref.getInt("whats", R.id.btnOff)
+
         val db = Firebase.firestore
+
 
         Log.e(ContentValues.TAG, "Checking User Data")
         val docRef = db.collection("users").document(auth.uid.toString())
         docRef.get().addOnSuccessListener { document ->
             if (document.data != null) {
-                Log.e(ContentValues.TAG, "DocumentSnapshot data: ${document.data}")
+//                Log.e(ContentValues.TAG, "DocumentSnapshot data: ${document.data}")
 
                 val days: Int = getDaysBetweenDates(
                     selectedDate.toString(),
@@ -370,7 +377,23 @@ class CallReceiver : BroadcastReceiver() {
                     if (type == 1) {
                         sendMsg(context, number)
                     } else {
-                        showPopUp(context)
+
+                        when (whats) {
+                            R.id.btnAsk -> {
+                                CoroutineScope(Dispatchers.Default).launch {
+                                    showPopUp(context, number)
+                                }
+                            }
+                            R.id.btnAuto -> {
+                                CoroutineScope(Dispatchers.Default).launch {
+                                    autoSend(context, number)
+                                }
+                            }
+                            else -> {
+
+                            }
+                        }
+
                     }
                 }
 
@@ -380,6 +403,67 @@ class CallReceiver : BroadcastReceiver() {
             }
         }.addOnFailureListener { exception ->
             Log.d(ContentValues.TAG, "get failed with ", exception)
+        }
+    }
+
+    private fun autoSend(context: Context?, number1: String) {
+
+        database = MessageDatabase.getDatabase(context!!.applicationContext)
+        var phoneNumber = number1
+        val cr: ContentResolver = context!!.contentResolver
+        val c = cr.query(CallLog.Calls.CONTENT_URI, null, null, null, null)
+        var totalCall = 1
+        if (c != null) {
+            totalCall = 1 // integer call log limit
+            //starts pulling logs from last - you can use moveToFirst() for first logs
+            if (c.moveToLast()) {
+                for (j in 0 until totalCall) {
+                    val phNumber = c.getString(c.getColumnIndexOrThrow(CallLog.Calls.NUMBER))
+                    var direction: String? = null
+                    when (c.getString(c.getColumnIndexOrThrow(CallLog.Calls.TYPE)).toInt()) {
+                        CallLog.Calls.OUTGOING_TYPE -> direction = "OUTGOING"
+                        CallLog.Calls.INCOMING_TYPE -> direction = "INCOMING"
+                        CallLog.Calls.MISSED_TYPE -> direction = "MISSED"
+                        else -> {}
+                    }
+                    c.moveToPrevious() // if you used moveToFirst() for first logs, you should this line to moveToNext
+                    phoneNumber = phNumber
+                    if (phNumber != null) {
+                        CoroutineScope(Dispatchers.Default).launch {
+                            val messageDio: WhatsappDao = database.getWhatsappDao()
+                            try {
+                                val msg = messageDio.getDefaultWhatsappMessage(true)
+
+                                if (phoneNumber.subSequence(0, 3).equals("+91")) {
+                                    phoneNumber.trim()
+                                    phoneNumber = phoneNumber.removePrefix("+91")
+                                    val smsNumber = "91$phoneNumber"
+                                    val sendIntent = Intent(Intent.ACTION_SEND)
+                                    sendIntent.type = "text/plain"
+                                    sendIntent.putExtra(Intent.EXTRA_TEXT, "${msg.message}")
+                                    sendIntent.putExtra("jid", "$smsNumber@s.whatsapp.net")
+                                    sendIntent.setPackage("com.whatsapp")
+                                    sendIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    context?.applicationContext?.startActivity(sendIntent)
+
+                                } else {
+                                    val smsNumber = "91$phoneNumber"
+                                    val sendIntent = Intent(Intent.ACTION_SEND)
+                                    sendIntent.type = "text/plain"
+                                    sendIntent.putExtra(Intent.EXTRA_TEXT, "${msg.message}")
+                                    sendIntent.putExtra("jid", "$smsNumber@s.whatsapp.net")
+                                    sendIntent.setPackage("com.whatsapp")
+                                    sendIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    context?.applicationContext?.startActivity(sendIntent)
+                                }
+                            } catch (e: Exception) {
+                                Log.e("set text error 454", e.toString())
+                            }
+                        }
+                    }
+                }
+            }
+            c.close()
         }
     }
 
@@ -396,7 +480,7 @@ class CallReceiver : BroadcastReceiver() {
         return (((secondDate.time - firstDate.time) / (1000 * 60 * 60 * 24)) + 1).toInt()
     }
 
-    private fun showPopUp(context: Context?) {
+    private fun showPopUp(context: Context?, number: String) {
 
         val sharedPref = context?.getSharedPreferences("Call", Context.MODE_PRIVATE) ?: return
         sharedPref.edit().putBoolean("popup", false)
@@ -542,7 +626,7 @@ class CallReceiver : BroadcastReceiver() {
             )
             intent.putExtra(ContactsContract.Intents.EXTRA_FORCE_CREATE, true)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            context.startActivity(intent)
+            context.applicationContext.startActivity(intent)
             windowManager.removeView(floatingView)
         }
         groupButton.setOnClickListener { }

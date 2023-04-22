@@ -1,6 +1,7 @@
 package com.deecto.callsmsmarketing
 
 import android.Manifest
+import android.accessibilityservice.AccessibilityService
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -8,6 +9,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
+import android.text.TextUtils
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -16,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.deecto.callsmsmarketing.databinding.ActivityDashboardBinding
 import com.deecto.callsmsmarketing.services.ManagePermissions
+import com.deecto.callsmsmarketing.services.WhatsappAccessibilityService
 import com.deecto.callsmsmarketing.utility.startPowerSaverIntent
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.FirebaseAuth
@@ -60,6 +64,10 @@ class Dashboard : AppCompatActivity() {
         sharedPref.edit().putBoolean("popup", true)
             .apply()
 
+        if (!isAccessibilityOn(this@Dashboard, WhatsappAccessibilityService::class.java)) {
+            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+            this@Dashboard.startActivity(intent)
+        }
         auth = Firebase.auth
         if (auth.currentUser == null) {
             startActivity(Intent(this, Login::class.java))
@@ -279,5 +287,35 @@ class Dashboard : AppCompatActivity() {
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
+    }
+
+    private fun isAccessibilityOn(
+        context: Context,
+        clazz: Class<out AccessibilityService?>
+    ): Boolean {
+        var accessibilityEnabled = 0
+        val service: String = context.packageName + "/" + clazz.canonicalName
+        try {
+            accessibilityEnabled = Settings.Secure.getInt(
+                context.applicationContext.contentResolver,
+                Settings.Secure.ACCESSIBILITY_ENABLED
+            )
+        } catch (ignored: Settings.SettingNotFoundException) {
+        }
+        val colonSplitter = TextUtils.SimpleStringSplitter(':')
+        if (accessibilityEnabled == 1) {
+            val settingValue: String = Settings.Secure.getString(
+                context.applicationContext.contentResolver,
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            )
+            colonSplitter.setString(settingValue)
+            while (colonSplitter.hasNext()) {
+                val accessibilityService = colonSplitter.next()
+                if (accessibilityService.equals(service, ignoreCase = true)) {
+                    return true
+                }
+            }
+        }
+        return false
     }
 }

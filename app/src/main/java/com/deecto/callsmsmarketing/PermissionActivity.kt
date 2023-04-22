@@ -1,5 +1,6 @@
 package com.deecto.callsmsmarketing
 
+import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -7,10 +8,12 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.text.TextUtils
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.deecto.callsmsmarketing.databinding.ActivityPermissionBinding
+import com.deecto.callsmsmarketing.services.WhatsappAccessibilityService
 import com.judemanutd.autostarter.AutoStartPermissionHelper
 
 
@@ -61,7 +64,43 @@ open class PermissionActivity : AppCompatActivity() {
         binding.cardBatteryPermission.setOnClickListener {
             ignoreBatteryOptimization()
         }
+        binding.cardAccessibilityPermission.setOnClickListener {
 
+            if (!isAccessibilityOn(this@PermissionActivity, WhatsappAccessibilityService::class.java)) {
+                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                this@PermissionActivity.startActivity(intent)
+            }
+        }
+
+    }
+    private fun isAccessibilityOn(
+        context: Context,
+        clazz: Class<out AccessibilityService?>
+    ): Boolean {
+        var accessibilityEnabled = 0
+        val service: String = context.packageName + "/" + clazz.canonicalName
+        try {
+            accessibilityEnabled = Settings.Secure.getInt(
+                context.applicationContext.contentResolver,
+                Settings.Secure.ACCESSIBILITY_ENABLED
+            )
+        } catch (ignored: Settings.SettingNotFoundException) {
+        }
+        val colonSplitter = TextUtils.SimpleStringSplitter(':')
+        if (accessibilityEnabled == 1) {
+            val settingValue: String = Settings.Secure.getString(
+                context.applicationContext.contentResolver,
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            )
+            colonSplitter.setString(settingValue)
+            while (colonSplitter.hasNext()) {
+                val accessibilityService = colonSplitter.next()
+                if (accessibilityService.equals(service, ignoreCase = true)) {
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     open fun ignoreBatteryOptimization() {

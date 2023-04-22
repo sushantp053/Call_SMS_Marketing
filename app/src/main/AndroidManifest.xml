@@ -121,6 +121,18 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name=".services.WhatsappAccessibilityService"
+            android:exported="true"
+            android:label="@string/app_name" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/whatsapp_service"/>
+
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService"/>
+            </intent-filter>
+        </service>
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/common_google_signin_btn_icon_dark"/>

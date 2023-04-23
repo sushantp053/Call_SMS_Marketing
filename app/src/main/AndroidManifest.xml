@@ -13,7 +13,6 @@
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
-
     <dist:module dist:instant="true" />
 
     <application
@@ -113,6 +112,7 @@
                 <action android:name="android.intent.action.PHONE_STATE" />
             </intent-filter>
         </receiver>
+
         <service
             android:name=".services.MyFirebaseMessagingService"
             android:exported="false">
@@ -124,18 +124,19 @@
         <service
             android:name=".services.WhatsappAccessibilityService"
             android:exported="true"
-            android:label="@string/app_name" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <meta-data
                 android:name="android.accessibilityservice"
-                android:resource="@xml/whatsapp_service"/>
-
+                android:resource="@xml/whatsapp_service" />
             <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService"/>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
         </service>
+
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/common_google_signin_btn_icon_dark"/>
+            android:resource="@drawable/common_google_signin_btn_icon_dark" />
 
     </application>
 

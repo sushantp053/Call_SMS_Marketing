@@ -3,6 +3,7 @@ package com.deecto.callsmsmarketing.services
 import android.Manifest
 import android.content.*
 import android.content.pm.PackageManager
+import android.database.Cursor
 import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Build
@@ -380,9 +381,7 @@ class CallReceiver : BroadcastReceiver() {
 
                         when (whats) {
                             R.id.btnAsk -> {
-                                CoroutineScope(Dispatchers.Default).launch {
-                                    showPopUp(context, number)
-                                }
+                                showPopUp(context, number)
                             }
                             R.id.btnAuto -> {
                                 CoroutineScope(Dispatchers.Default).launch {
@@ -411,7 +410,7 @@ class CallReceiver : BroadcastReceiver() {
         database = MessageDatabase.getDatabase(context!!.applicationContext)
         var phoneNumber = number1
         val cr: ContentResolver = context!!.contentResolver
-        val c = cr.query(CallLog.Calls.CONTENT_URI, null, null, null, null)
+        val c = cr.query(CallLog.Calls.CONTENT_URI, null, null, null, CallLog.Calls.DATE + " ASC")
         var totalCall = 1
         if (c != null) {
             totalCall = 1 // integer call log limit
@@ -463,8 +462,32 @@ class CallReceiver : BroadcastReceiver() {
                     }
                 }
             }
+
             c.close()
         }
+
+
+    }
+
+    fun LastCall(context: Context?): String? {
+        val sb = StringBuffer()
+        val cur: Cursor? = context!!.applicationContext.contentResolver.query(
+            CallLog.Calls.CONTENT_URI,
+            null,
+            null,
+            null,
+            CallLog.Calls.DATE + " ASC"
+        )
+        val number: Int = cur?.getColumnIndex(CallLog.Calls.NUMBER)!!
+        if (cur != null) {
+            while (cur.moveToNext()) {
+                val phNumber: String = cur.getString(number)
+                sb.append("\nPhone Number:$phNumber")
+                break
+            }
+        }
+        cur.close()
+        return sb.toString()
     }
 
     private fun getDaysBetweenDates(
@@ -534,13 +557,13 @@ class CallReceiver : BroadcastReceiver() {
 
         windowManager.addView(floatingView, params)
 
-//        floatingView.setOnFocusChangeListener { v, hasFocus ->
-//            if (!hasFocus) {
-//                sharedPref.edit().putBoolean("popup", true)
-//                    .apply()
-//                windowManager.removeView(floatingView)
-//            }
-//        }
+        floatingView.setOnFocusChangeListener { v, hasFocus ->
+            if (!hasFocus) {
+                sharedPref.edit().putBoolean("popup", true)
+                    .apply()
+                windowManager.removeView(floatingView)
+            }
+        }
         floatingView.setOnKeyListener { v, keyCode, event ->
             if (keyCode == KeyEvent.KEYCODE_HOME) {
                 Log.e("Error", "Home Key pressed")
@@ -575,7 +598,7 @@ class CallReceiver : BroadcastReceiver() {
         }
 
         val cr: ContentResolver = context.contentResolver
-        val c = cr.query(CallLog.Calls.CONTENT_URI, null, null, null, null)
+        val c = cr.query(CallLog.Calls.CONTENT_URI, null, null, null, CallLog.Calls.DATE + " ASC")
         var totalCall = 1
         if (c != null) {
             totalCall = 1 // integer call log limit

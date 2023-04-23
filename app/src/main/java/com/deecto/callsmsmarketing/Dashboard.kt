@@ -63,10 +63,12 @@ class Dashboard : AppCompatActivity() {
         val sharedPref = getSharedPreferences("Call", Context.MODE_PRIVATE) ?: return
         sharedPref.edit().putBoolean("popup", true)
             .apply()
-
-        if (!isAccessibilityOn(this@Dashboard, WhatsappAccessibilityService::class.java)) {
-            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-            this@Dashboard.startActivity(intent)
+        val whats = sharedPref.getInt("whats", R.id.btnOff)
+        if(whats == R.id.btnAuto) {
+            if (!isAccessibilityOn(this@Dashboard, WhatsappAccessibilityService::class.java)) {
+                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                this@Dashboard.startActivity(intent)
+            }
         }
         auth = Firebase.auth
         if (auth.currentUser == null) {

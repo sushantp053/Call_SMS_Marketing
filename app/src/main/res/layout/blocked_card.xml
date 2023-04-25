@@ -33,16 +33,15 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Blocked Name"
-                    android:textColor="@color/black"
-                    android:textSize="18sp" />
+                    android:textStyle="bold"
+                    android:textColor="@color/black" />
 
                 <TextView
                     android:id="@+id/tv_blockedNumber"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="1234567890"
-                    android:textSize="18sp" />
+                    android:text="1234567890" />
             </LinearLayout>
             <Button
                 android:id="@+id/removeBlockBtn"

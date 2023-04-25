@@ -15,6 +15,6 @@ interface BlockedContactsDao {
     @Delete
     suspend fun delete(blockedContacts: BlockedContacts)
 
-    @Query("SELECT * FROM blocked_contacts WHERE phone = :phone ")
-    fun isBlocked(phone: String?) : BlockedContacts
+    @Query("SELECT EXISTS(SELECT * FROM blocked_contacts WHERE phone = :phone )")
+    fun isBlocked(phone: String?) : Boolean
 }

@@ -15,7 +15,6 @@ import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import com.deecto.callsmsmarketing.R
 import com.deecto.callsmsmarketing.database.*
@@ -67,41 +66,43 @@ class CallReceiver : BroadcastReceiver() {
             }
 
             if (intent?.getStringExtra(TelephonyManager.EXTRA_STATE) == TelephonyManager.EXTRA_STATE_OFFHOOK) {
-                sharedPref.edit().putBoolean("popup", true)
-                    .apply()
                 val number: String =
                     intent!!.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER).toString()
-
                 if (outgoing) {
-                    if (number != null) {
-                        if (dailySms) {
-                            lastCallCompare(context, number, false)
-                        } else {
-                            checkUserData(context, number, 1)
+                    if (number.isNotEmpty()) {
+                        if (number.length >= 10) {
+                            if (dailySms) {
+                                lastCallCompare(context, number, false)
+                            } else {
+                                isBlocked(context, number, 1)
+                            }
+
                         }
                     }
                 }
             } else if (intent?.getStringExtra(TelephonyManager.EXTRA_STATE) == TelephonyManager.EXTRA_STATE_RINGING) {
-                sharedPref.edit().putBoolean("popup", true)
-                    .apply()
+
                 val number: String =
-                    intent!!.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER).toString()
+                    intent!!.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
+                        .toString()
+
                 if (incoming) {
-                    if (number != null) {
-                        if (dailySms) {
-                            lastCallCompare(context, number, true)
-                        } else {
+                    if (number.isNotEmpty()) {
+                        if (number.length >= 10) {
+                            if (dailySms) {
+                                lastCallCompare(context, number, true)
+                            } else {
 //                            sendMsg(context, number)
-                            checkUserData(context, number, 1)
+                                isBlocked(context, number, 1)
+                            }
+
                         }
                     }
                 }
             } else if ((intent?.getStringExtra(TelephonyManager.EXTRA_STATE) == TelephonyManager.EXTRA_STATE_IDLE)) {
-                Toast.makeText(context?.applicationContext, "Idle State $popup", Toast.LENGTH_SHORT)
-                    .show()
                 if (popup) {
                     CoroutineScope(Dispatchers.Default).launch {
-                        checkUserData(context, "0", 2)
+                        checkContactUserData(context, "0", 2)
                     }
                 }
             }
@@ -111,6 +112,26 @@ class CallReceiver : BroadcastReceiver() {
                 "SMS Marketing Not Started Please Login",
                 Toast.LENGTH_SHORT
             ).show()
+        }
+    }
+
+    private fun isBlocked(context: Context, number: String, type: Int) {
+        database = MessageDatabase.getDatabase(context!!.applicationContext)
+        var isIAmBlocked = false
+        CoroutineScope(Dispatchers.Default).launch {
+            val blockedContactsDao: BlockedContactsDao = database.getBlockedContactsDao()
+            try {
+                isIAmBlocked = blockedContactsDao.isBlocked(number)
+                Log.e("Returning Try Value", "Try $isIAmBlocked")
+                if (!isIAmBlocked) {
+                    checkContactUserData(context, number, type)
+                } else {
+                    Log.e("Blocked Contact", number)
+                }
+            } catch (e: NullPointerException) {
+                Log.e("BLOCKED ERROR 132", e.toString())
+                isIAmBlocked = false
+            }
         }
     }
 
@@ -174,7 +195,7 @@ class CallReceiver : BroadcastReceiver() {
                                 }
 
                             } catch (e: NullPointerException) {
-                                Log.e("Exception 170", e.toString())
+                                Log.e("Exception 198", e.toString())
                                 if (limit > 0) {
                                     smsManager.sendTextMessage(
                                         number, null, msg.message, null, null
@@ -239,7 +260,7 @@ class CallReceiver : BroadcastReceiver() {
                                 }
                             }
                         } catch (e: NullPointerException) {
-                            Log.e("Exception 235", e.toString())
+                            Log.e("Exception 263", e.toString())
                             if (limit > 0) {
                                 smsManager.sendTextMessage(
                                     number, null, msg.message, null, null
@@ -261,7 +282,7 @@ class CallReceiver : BroadcastReceiver() {
             }
 
         } catch (e: Exception) {
-            Log.e("SMS Sending Error", e.message.toString())
+            Log.e("SMS Sending Error 285", e.message.toString())
         }
     }
 
@@ -281,7 +302,7 @@ class CallReceiver : BroadcastReceiver() {
                 val outgoingDifferance =
                     parseLong(formatted.toString()) - parseLong(phoneCallDetails.outgoing_time)
                 if (incomingDifferance > (24 * 60 * 60) && outgoingDifferance > (24 * 60 * 60)) {
-                    checkUserData(context, number, 1)
+                    isBlocked(context, number, 1)
                 } else {
                     Log.e("Hours are Lessor", "Last Call done in 24 hours")
                 }
@@ -291,9 +312,9 @@ class CallReceiver : BroadcastReceiver() {
                     phoneCallDao.updateOutgoingTime(formatted.toString(), number)
                 }
             } catch (e: Exception) {
-                Log.e("Time comparing error", e.message.toString())
+                Log.e("Time comparing error 315", e.message.toString())
 //                sendMsg(context, number)
-                checkUserData(context, number, 1)
+                isBlocked(context, number, 1)
                 val phoneCall: PhoneCall =
                     PhoneCall(null, number, formatted, formatted, "active", 1)
                 phoneCallDao.insert(phoneCall)
@@ -315,7 +336,7 @@ class CallReceiver : BroadcastReceiver() {
                 daySMSCounterDao.updateDayCount(formattedDate.toString())
 
             } catch (e: NullPointerException) {
-                Log.e("Exception 312", e.toString())
+                Log.e("Exception 339", e.toString())
                 val daySMSCounter = DaySMSCounter(null, formattedDate.toString(), 1)
                 daySMSCounterDao.insert(
                     daySMSCounter
@@ -336,7 +357,7 @@ class CallReceiver : BroadcastReceiver() {
                 dayWhatsappCounterDao.updateDayCount(formattedDate.toString())
 
             } catch (e: NullPointerException) {
-                Log.e("Whatsapp Exception 333", e.toString())
+                Log.e("Whatsapp Exception 360", e.toString())
                 val dayWhatsAppCounter =
                     DayWhatsappCounter(null, formattedDate.toString(), 1)
                 dayWhatsappCounterDao.insert(
@@ -346,7 +367,7 @@ class CallReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun checkUserData(context: Context?, number: String, type: Int) {
+    private fun checkContactUserData(context: Context?, number: String, type: Int) {
 
         val current = LocalDateTime.now()
         val formatter2 = DateTimeFormatter.ofPattern("yyyyMMdd")
@@ -409,6 +430,10 @@ class CallReceiver : BroadcastReceiver() {
 
     private fun autoSend(context: Context?, number1: String) {
 
+        val sharedPref = context?.getSharedPreferences("Call", Context.MODE_PRIVATE) ?: return
+        sharedPref.edit().putBoolean("popup", false)
+            .apply()
+
         database = MessageDatabase.getDatabase(context!!.applicationContext)
         var phoneNumber = number1
         val cr: ContentResolver = context!!.contentResolver
@@ -432,35 +457,58 @@ class CallReceiver : BroadcastReceiver() {
                     if (phNumber != null) {
                         CoroutineScope(Dispatchers.Default).launch {
                             val messageDio: WhatsappDao = database.getWhatsappDao()
+                            val blockedContactsDao: BlockedContactsDao = database.getBlockedContactsDao()
                             try {
                                 val msg = messageDio.getDefaultWhatsappMessage(true)
-
                                 if (phoneNumber.subSequence(0, 3).equals("+91")) {
                                     phoneNumber.trim()
                                     phoneNumber = phoneNumber.removePrefix("+91")
-                                    val smsNumber = "91$phoneNumber"
-                                    val sendIntent = Intent(Intent.ACTION_SEND)
-                                    sendIntent.type = "text/plain"
-                                    sendIntent.putExtra(Intent.EXTRA_TEXT, "${msg.message}")
-                                    sendIntent.putExtra("jid", "$smsNumber@s.whatsapp.net")
-                                    sendIntent.setPackage("com.whatsapp")
-                                    sendIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                    context?.applicationContext?.startActivity(sendIntent)
+                                    try {
+                                        if( !blockedContactsDao.isBlocked(phoneNumber))
+                                        {
+                                            val smsNumber = "91$phoneNumber"
+                                            val sendIntent = Intent(Intent.ACTION_SEND)
+                                            sendIntent.type = "text/plain"
+                                            sendIntent.putExtra(Intent.EXTRA_TEXT, "${msg.message}")
+                                            sendIntent.putExtra("jid", "$smsNumber@s.whatsapp.net")
+                                            sendIntent.setPackage("com.whatsapp")
+                                            sendIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                            context?.applicationContext?.startActivity(sendIntent)
+
+                                        }else{
+                                            Log.e("AutoSend Blocked", "Blocked Contact")
+                                        }
+                                    } catch (e: NullPointerException) {
+                                        Log.e("BLOCKED ERROR 482", e.toString())
+                                    }
 
                                 } else {
-                                    val smsNumber = "91$phoneNumber"
-                                    val sendIntent = Intent(Intent.ACTION_SEND)
-                                    sendIntent.type = "text/plain"
-                                    sendIntent.putExtra(Intent.EXTRA_TEXT, "${msg.message}")
-                                    sendIntent.putExtra("jid", "$smsNumber@s.whatsapp.net")
-                                    sendIntent.setPackage("com.whatsapp")
-                                    sendIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                    context?.applicationContext?.startActivity(sendIntent)
+                                    try {
+                                        if(!blockedContactsDao.isBlocked(phoneNumber))
+                                        {
+                                            val smsNumber = "91$phoneNumber"
+                                            val sendIntent = Intent(Intent.ACTION_SEND)
+                                            sendIntent.type = "text/plain"
+                                            sendIntent.putExtra(Intent.EXTRA_TEXT, "${msg.message}")
+                                            sendIntent.putExtra("jid", "$smsNumber@s.whatsapp.net")
+                                            sendIntent.setPackage("com.whatsapp")
+                                            sendIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                            context?.applicationContext?.startActivity(sendIntent)
+
+                                        }else{
+                                            Log.e("AutoSend Blocked", "Blocked Contact")
+                                        }
+                                    } catch (e: NullPointerException) {
+                                        Log.e("BLOCKED ERROR 502", e.toString())
+                                    }
                                 }
                             } catch (e: Exception) {
-                                Log.e("set text error 454", e.toString())
+                                Log.e("set text error 506", e.toString())
                             }
+                            sharedPref.edit().putBoolean("popup", true)
+                                .apply()
                         }
+
                     }
                 }
             }
@@ -513,9 +561,6 @@ class CallReceiver : BroadcastReceiver() {
 
         val database: MessageDatabase = MessageDatabase.getDatabase(context!!.applicationContext)
         var whatsMsg: String = "HI"
-
-        val contactName: String
-        val contactNumber: String
 
         val closeButton: ImageButton
         val callButton: Button
@@ -591,7 +636,7 @@ class CallReceiver : BroadcastReceiver() {
                 textMsg.text = msg.message.toString()
                 whatsMsg = msg.message.toString()
             } catch (e: Exception) {
-                Log.e("set text error", e.toString())
+                Log.e("set text error 639", e.toString())
             }
         }
 

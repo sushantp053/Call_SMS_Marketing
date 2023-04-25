@@ -20,14 +20,12 @@ import androidx.core.content.ContextCompat
 import com.deecto.callsmsmarketing.databinding.ActivityDashboardBinding
 import com.deecto.callsmsmarketing.services.ManagePermissions
 import com.deecto.callsmsmarketing.services.WhatsappAccessibilityService
-import com.deecto.callsmsmarketing.utility.startPowerSaverIntent
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.messaging.FirebaseMessaging
-import com.judemanutd.autostarter.AutoStartPermissionHelper
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
@@ -134,7 +132,7 @@ class Dashboard : AppCompatActivity() {
             startActivity(intent)
         }
         binding.cardContactBlocker.setOnClickListener {
-            val intent = Intent(this, ComingSoon::class.java)
+            val intent = Intent(this, BlockedContactsActivity::class.java)
             startActivity(intent)
         }
         binding.cardTutorial.setOnClickListener {

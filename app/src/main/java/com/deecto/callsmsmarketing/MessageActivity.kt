@@ -95,7 +95,6 @@ class MessageActivity : AppCompatActivity(), MessageAdapter.MessageItemClickList
 
     override fun onDeleteClicked(message: Message) {
 
-        Toast.makeText(this, "Delete Clicked", Toast.LENGTH_SHORT).show()
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Delete")
         builder.setMessage("Do you really want to delete this message")

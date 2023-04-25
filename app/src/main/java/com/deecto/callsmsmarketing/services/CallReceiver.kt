@@ -15,9 +15,11 @@ import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import com.deecto.callsmsmarketing.R
 import com.deecto.callsmsmarketing.database.*
+import com.deecto.callsmsmarketing.model.BlockedContacts
 import com.deecto.callsmsmarketing.model.DaySMSCounter
 import com.deecto.callsmsmarketing.model.DayWhatsappCounter
 import com.deecto.callsmsmarketing.model.PhoneCall
@@ -512,6 +514,9 @@ class CallReceiver : BroadcastReceiver() {
         val database: MessageDatabase = MessageDatabase.getDatabase(context!!.applicationContext)
         var whatsMsg: String = "HI"
 
+        val contactName: String
+        val contactNumber: String
+
         val closeButton: ImageButton
         val callButton: Button
         val reminderButton: Button
@@ -519,7 +524,6 @@ class CallReceiver : BroadcastReceiver() {
         val groupButton: Button
         val whatsAppButton: Button
         val saveContactButton: Button
-
         val textName: TextView
         val textNumber: TextView
         val textMsg: TextView
@@ -643,13 +647,24 @@ class CallReceiver : BroadcastReceiver() {
             sharedPref.edit().putBoolean("popup", true)
                 .apply()
 
-            val intent = Intent(
-                ContactsContract.Intents.SHOW_OR_CREATE_CONTACT,
-                Uri.parse("tel:" + phoneNumber)
-            )
-            intent.putExtra(ContactsContract.Intents.EXTRA_FORCE_CREATE, true)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            context.applicationContext.startActivity(intent)
+            CoroutineScope(Dispatchers.Default).launch {
+                val blockedContactsDao: BlockedContactsDao = database.getBlockedContactsDao()
+                try {
+                    val blockedContacts = BlockedContacts(
+                        null,
+                        textNumber.text.toString(),
+                        textName.text.toString()
+                    )
+                    blockedContactsDao.insert(blockedContacts)
+
+                } catch (e: NullPointerException) {
+                }
+            }
+            Toast.makeText(
+                context.applicationContext,
+                "Added to blocklist",
+                Toast.LENGTH_SHORT
+            ).show()
             windowManager.removeView(floatingView)
         }
         groupButton.setOnClickListener { }

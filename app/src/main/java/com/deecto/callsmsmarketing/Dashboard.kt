@@ -120,7 +120,7 @@ class Dashboard : AppCompatActivity() {
             startActivity(intent)
         }
         binding.cardWebsite.setOnClickListener {
-            val intent = Intent(this, ComingSoon::class.java)
+            val intent = Intent(this, WebSite::class.java)
             startActivity(intent)
         }
         binding.cardSocialMediaImages.setOnClickListener {

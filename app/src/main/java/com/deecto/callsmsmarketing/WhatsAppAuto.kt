@@ -2,10 +2,13 @@ package com.deecto.callsmsmarketing
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.Log
+import android.util.Size
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import com.deecto.callsmsmarketing.database.DayWhatsappCounterDao
 import com.deecto.callsmsmarketing.database.MessageDatabase
 import com.deecto.callsmsmarketing.database.WhatsappDao
@@ -79,10 +82,10 @@ class WhatsAppAuto : AppCompatActivity() {
             R.id.btnAsk -> binding.toggleButtonGroup.check(R.id.btnAsk)
             R.id.btnAuto -> binding.toggleButtonGroup.check(R.id.btnAuto)
         }
-
-        binding.dailyOne.isChecked = dailySms
+        mediaFun(attachment)
+        binding.dailyOneWhatsapp.isChecked = dailySms
         binding.incomingCallSwitch.isChecked = incoming
-        binding.outGoingCallSwitch.isChecked = outgoing
+        binding.attachMediaFile.isChecked = attachment
 //        binding.limitText.text = "$limit SMS"
 
 
@@ -96,8 +99,38 @@ class WhatsAppAuto : AppCompatActivity() {
                 }
             }
         }
+        binding.attachMediaFile.setOnCheckedChangeListener { buttonView, isChecked ->
+            with(sharedPref.edit()) {
+                putBoolean("whats_attachment", isChecked)
+                apply()
+                mediaFun(isChecked)
+            }
+        }
+        binding.mediaFileImage.setOnClickListener{
+            val intent = Intent()
+                .setType("*/*")
+                .setAction(Intent.ACTION_GET_CONTENT)
+            startActivityForResult(Intent.createChooser(intent, "Select a file"), 111)
+        }
     }
 
+    private fun mediaFun(status : Boolean){
+        if(status) {
+            binding.mediaFileImage.isVisible = true
+            binding.horizontalLine.isVisible = true
+        }else{
+            binding.mediaFileImage.isVisible = false
+            binding.horizontalLine.isVisible = false
+        }
+    }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == 111 && resultCode == RESULT_OK) {
+            val selectedFile = data?.data // The URI with the location of the file
+            binding.mediaFileImage.setImageURI(selectedFile)
+        }
+    }
     private fun showToast(str: String) {
         Toast.makeText(this, str, Toast.LENGTH_SHORT).show()
 

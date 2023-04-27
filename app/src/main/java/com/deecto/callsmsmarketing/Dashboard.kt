@@ -2,6 +2,7 @@ package com.deecto.callsmsmarketing
 
 import android.Manifest
 import android.accessibilityservice.AccessibilityService
+import android.app.ProgressDialog
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -35,11 +36,12 @@ import java.util.*
 class Dashboard : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private val db = Firebase.firestore
-
     private val permissionsRequestCode = 123
     private lateinit var managePermissions: ManagePermissions
-
     private lateinit var binding: ActivityDashboardBinding
+    lateinit var web_url: String
+    lateinit var web_user: String
+    lateinit var web_pass: String
 
 
     val list = listOf<String>(
@@ -62,12 +64,12 @@ class Dashboard : AppCompatActivity() {
         sharedPref.edit().putBoolean("popup", true)
             .apply()
         val whats = sharedPref.getInt("whats", R.id.btnOff)
-        if(whats == R.id.btnAuto) {
-            if (!isAccessibilityOn(this@Dashboard, WhatsappAccessibilityService::class.java)) {
-                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                this@Dashboard.startActivity(intent)
-            }
-        }
+//        if (whats == R.id.btnAuto) {
+//            if (!isAccessibilityOn(this@Dashboard, WhatsappAccessibilityService::class.java)) {
+//                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+//                this@Dashboard.startActivity(intent)
+//            }
+//        }
         auth = Firebase.auth
         if (auth.currentUser == null) {
             startActivity(Intent(this, Login::class.java))
@@ -120,8 +122,15 @@ class Dashboard : AppCompatActivity() {
             startActivity(intent)
         }
         binding.cardWebsite.setOnClickListener {
-            val intent = Intent(this, WebSite::class.java)
-            startActivity(intent)
+            if (web_url.isNullOrEmpty()) {
+                showWebNotCreated()
+            } else {
+                val intent = Intent(this, WebSite::class.java)
+                intent.putExtra("web_url", web_url)
+                intent.putExtra("web_user", web_user)
+                intent.putExtra("web_pass", web_pass)
+                startActivity(intent)
+            }
         }
         binding.cardSocialMediaImages.setOnClickListener {
             val intent = Intent(this, ComingSoon::class.java)
@@ -181,7 +190,10 @@ class Dashboard : AppCompatActivity() {
         val current = LocalDateTime.now()
         val formatter2 = DateTimeFormatter.ofPattern("yyyyMMdd")
         val selectedDate = current.format(formatter2)
-
+        val mProgressDialog = ProgressDialog(this)
+        mProgressDialog.setTitle("Loading Data")
+        mProgressDialog.setMessage("Let's get started marketing")
+        mProgressDialog.show()
 
         Log.e(ContentValues.TAG, "Checking User Data")
         val docRef = db.collection("users").document(auth.uid.toString())
@@ -215,9 +227,13 @@ class Dashboard : AppCompatActivity() {
                                 document.data!!.get("plan_name").toString()
                             )
                         }
+                        web_url = document.data!!["web_url"].toString()
+                        web_user = document.data!!["web_user"].toString()
+                        web_pass = document.data!!["web_pass"].toString()
                     }
-
+                    mProgressDialog.dismiss()
                 } else {
+                    mProgressDialog.dismiss()
                     Log.e(ContentValues.TAG, "No such document")
 //                                    RegisterUser
                     startActivity(Intent(this, RegisterUser::class.java))
@@ -226,6 +242,10 @@ class Dashboard : AppCompatActivity() {
             }
             .addOnFailureListener { exception ->
                 Log.d(ContentValues.TAG, "get failed with ", exception)
+                mProgressDialog.dismiss()
+//                                    RegisterUser
+                startActivity(Intent(this, RegisterUser::class.java))
+                finish()
             }
     }
 
@@ -253,6 +273,23 @@ class Dashboard : AppCompatActivity() {
         builder.setMessage("Hello your $plan plan is expired from $days days.\nFor uninterrupted service renew your plan")
         builder.setPositiveButton("Renew Plan") { dialog, which ->
 
+            dialog.dismiss()
+        }
+        builder.setNegativeButton(android.R.string.no) { dialog, which ->
+            Toast.makeText(
+                applicationContext,
+                android.R.string.no, Toast.LENGTH_SHORT
+            ).show()
+            dialog.dismiss()
+        }
+        builder.show()
+    }
+
+    private fun showWebNotCreated() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Website")
+        builder.setMessage("Your website is not available contact customer care to create.")
+        builder.setPositiveButton("Ok") { dialog, which ->
             dialog.dismiss()
         }
         builder.setNegativeButton(android.R.string.no) { dialog, which ->

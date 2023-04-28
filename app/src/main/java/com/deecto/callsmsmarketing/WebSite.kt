@@ -36,7 +36,7 @@ class WebSite : AppCompatActivity() {
             try {
                 val shareIntent = Intent(Intent.ACTION_SEND)
                 shareIntent.type = "text/plain"
-                shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Marketing Website")
+                shareIntent.putExtra(Intent.EXTRA_SUBJECT, "My Website")
                 var shareMessage = "\nVisit my website\n\n$webUrl"
                 shareIntent.putExtra(Intent.EXTRA_TEXT, shareMessage)
                 startActivity(Intent.createChooser(shareIntent, "choose one"))

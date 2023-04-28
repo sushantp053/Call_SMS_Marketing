@@ -24,7 +24,11 @@ class WhatsappAccessibilityService : AccessibilityService() {
         ) {
             return
         }
-
+        if (messageField.text == null || messageField.text.isEmpty() || !messageField.text.toString()
+                .endsWith("Marketingwala CJ")
+        ) {
+            return
+        }
         val sendMessageNodeInfoList =
             rootInActiveWindow.findAccessibilityNodeInfosByViewId("com.whatsapp:id/send")
         if (sendMessageNodeInfoList == null || sendMessageNodeInfoList.isEmpty()) {

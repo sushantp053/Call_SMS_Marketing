@@ -332,15 +332,18 @@ class CallReceiver : BroadcastReceiver() {
 
         CoroutineScope(Dispatchers.Default).launch {
             val daySMSCounterDao: DaySMSCounterDao = database.getDaySMSCounterDao()
-            try {
-                daySMSCounterDao.updateDayCount(formattedDate.toString())
-
-            } catch (e: NullPointerException) {
-                Log.e("Exception 339", e.toString())
+            val id = daySMSCounterDao.getDayId(formattedDate.toString())
+            if (id == null) {
                 val daySMSCounter = DaySMSCounter(null, formattedDate.toString(), 1)
-                daySMSCounterDao.insert(
-                    daySMSCounter
-                )
+                daySMSCounterDao.insert(daySMSCounter)
+            } else {
+                try {
+                    daySMSCounterDao.updateDayCount(formattedDate.toString())
+                } catch (e: NullPointerException) {
+                    Log.e("Exception 339", e.toString())
+                    val daySMSCounter = DaySMSCounter(null, formattedDate.toString(), 1)
+                    daySMSCounterDao.insert(daySMSCounter)
+                }
             }
         }
     }
@@ -353,16 +356,21 @@ class CallReceiver : BroadcastReceiver() {
 
         CoroutineScope(Dispatchers.Default).launch {
             val dayWhatsappCounterDao: DayWhatsappCounterDao = database.getDayWhatsappCounterDao()
-            try {
-                dayWhatsappCounterDao.updateDayCount(formattedDate.toString())
-
-            } catch (e: NullPointerException) {
-                Log.e("Whatsapp Exception 360", e.toString())
+            val id = dayWhatsappCounterDao.getDayId(formattedDate.toString())
+            if (id == null) {
                 val dayWhatsAppCounter =
                     DayWhatsappCounter(null, formattedDate.toString(), 1)
-                dayWhatsappCounterDao.insert(
-                    dayWhatsAppCounter
-                )
+                dayWhatsappCounterDao.insert(dayWhatsAppCounter)
+            } else {
+                try {
+                    dayWhatsappCounterDao.updateDayCount(formattedDate.toString())
+
+                } catch (e: NullPointerException) {
+                    Log.e("Whatsapp Exception 373", e.toString())
+                    val dayWhatsAppCounter =
+                        DayWhatsappCounter(null, formattedDate.toString(), 1)
+                    dayWhatsappCounterDao.insert(dayWhatsAppCounter)
+                }
             }
         }
     }
@@ -457,25 +465,28 @@ class CallReceiver : BroadcastReceiver() {
                     if (phNumber != null) {
                         CoroutineScope(Dispatchers.Default).launch {
                             val messageDio: WhatsappDao = database.getWhatsappDao()
-                            val blockedContactsDao: BlockedContactsDao = database.getBlockedContactsDao()
+                            val blockedContactsDao: BlockedContactsDao =
+                                database.getBlockedContactsDao()
                             try {
                                 val msg = messageDio.getDefaultWhatsappMessage(true)
                                 if (phoneNumber.subSequence(0, 3).equals("+91")) {
                                     phoneNumber.trim()
                                     phoneNumber = phoneNumber.removePrefix("+91")
                                     try {
-                                        if( !blockedContactsDao.isBlocked(phoneNumber))
-                                        {
+                                        if (!blockedContactsDao.isBlocked(phoneNumber)) {
                                             val smsNumber = "91$phoneNumber"
                                             val sendIntent = Intent(Intent.ACTION_SEND)
                                             sendIntent.type = "text/plain"
-                                            sendIntent.putExtra(Intent.EXTRA_TEXT, "${msg.message}")
+                                            sendIntent.putExtra(
+                                                Intent.EXTRA_TEXT, "${msg.message} " +
+                                                        "\nMarketingwala CJ"
+                                            )
                                             sendIntent.putExtra("jid", "$smsNumber@s.whatsapp.net")
                                             sendIntent.setPackage("com.whatsapp")
                                             sendIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                                             context?.applicationContext?.startActivity(sendIntent)
 
-                                        }else{
+                                        } else {
                                             Log.e("AutoSend Blocked", "Blocked Contact")
                                         }
                                     } catch (e: NullPointerException) {
@@ -484,8 +495,7 @@ class CallReceiver : BroadcastReceiver() {
 
                                 } else {
                                     try {
-                                        if(!blockedContactsDao.isBlocked(phoneNumber))
-                                        {
+                                        if (!blockedContactsDao.isBlocked(phoneNumber)) {
                                             val smsNumber = "91$phoneNumber"
                                             val sendIntent = Intent(Intent.ACTION_SEND)
                                             sendIntent.type = "text/plain"
@@ -495,7 +505,7 @@ class CallReceiver : BroadcastReceiver() {
                                             sendIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                                             context?.applicationContext?.startActivity(sendIntent)
 
-                                        }else{
+                                        } else {
                                             Log.e("AutoSend Blocked", "Blocked Contact")
                                         }
                                     } catch (e: NullPointerException) {
@@ -515,8 +525,7 @@ class CallReceiver : BroadcastReceiver() {
 
             c.close()
         }
-
-
+        changeWhatsAppCounter(context)
     }
 
     fun LastCall(context: Context?): String? {

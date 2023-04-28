@@ -9,6 +9,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import com.deecto.callsmsmarketing.database.DaySMSCounterDao
 import com.deecto.callsmsmarketing.database.MessageDao
 import com.deecto.callsmsmarketing.database.MessageDatabase
@@ -39,16 +40,22 @@ class MainActivity : AppCompatActivity() {
         val view = binding.root
         setContentView(view)
 
+        val webUrl: String = intent.getStringExtra("web_url").toString()
         auth = Firebase.auth
         if (auth.currentUser == null) {
             startActivity(Intent(this, Login::class.java))
             finish()
         } else {
-            checkUserData()
+//            checkUserData()
         }
 
         database = MessageDatabase.getDatabase(this)
-
+        if (!webUrl.isNullOrEmpty()) {
+            binding.attachLinkCard.isVisible = true
+            binding.webUrlTV.text = webUrl
+        } else {
+            binding.attachLinkCard.isVisible = false
+        }
 
         CoroutineScope(Dispatchers.Default).launch {
             var messageDio: MessageDao = database.getMessageDao()
@@ -86,11 +93,13 @@ class MainActivity : AppCompatActivity() {
         val dailySms = sharedPref.getBoolean("daily", true)
         val incoming = sharedPref.getBoolean("incoming", true)
         val outgoing = sharedPref.getBoolean("outgoing", true)
+        val attachLink = sharedPref.getBoolean("sms_link", true)
         limit = sharedPref.getInt("limit", 100)
 
         binding.dailyOne.isChecked = dailySms
         binding.incomingCallSwitch.isChecked = incoming
         binding.outGoingCallSwitch.isChecked = outgoing
+        binding.attachLinkSwitch.isChecked = attachLink
         binding.limitText.text = "$limit SMS"
 
         binding.smsLimitLayout.setOnClickListener {
@@ -102,19 +111,41 @@ class MainActivity : AppCompatActivity() {
                 apply()
             }
         }
-        binding.incomingCallSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+        binding.incomingCallSwitch.setOnCheckedChangeListener { _, isChecked ->
             with(sharedPref.edit()) {
                 putBoolean("incoming", isChecked)
                 apply()
             }
         }
-        binding.outGoingCallSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
+        binding.outGoingCallSwitch.setOnCheckedChangeListener { _, isChecked ->
             with(sharedPref.edit()) {
                 putBoolean("outgoing", isChecked)
                 apply()
             }
         }
+        binding.attachLinkSwitch.setOnCheckedChangeListener { _, isChecked ->
+            with(sharedPref.edit()) {
+                putBoolean("sms_link", isChecked)
+                apply()
+            }
+            with(sharedPref.edit()){
+                putString("webUrl", webUrl)
+                apply()
+            }
+        }
 
+        binding.shareWebSite.setOnClickListener {
+            try {
+                val shareIntent = Intent(Intent.ACTION_SEND)
+                shareIntent.type = "text/plain"
+                shareIntent.putExtra(Intent.EXTRA_SUBJECT, "My Website")
+                var shareMessage = "\nVisit my website\n\n$webUrl"
+                shareIntent.putExtra(Intent.EXTRA_TEXT, shareMessage)
+                startActivity(Intent.createChooser(shareIntent, "choose one"))
+            } catch (e: Exception) {
+                //e.toString();
+            }
+        }
         binding.changeMessageCard.setOnClickListener {
             val i = Intent(
                 this,

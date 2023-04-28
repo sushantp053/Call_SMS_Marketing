@@ -14,6 +14,7 @@ import com.deecto.callsmsmarketing.database.MessageDatabase
 import com.deecto.callsmsmarketing.database.WhatsappDao
 import com.deecto.callsmsmarketing.databinding.ActivityWhatsAppAutoBinding
 import com.deecto.callsmsmarketing.model.DayWhatsappCounter
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -33,7 +34,14 @@ class WhatsAppAuto : AppCompatActivity() {
         setContentView(view)
 
         database = MessageDatabase.getDatabase(this)
+        val webUrl: String = intent.getStringExtra("web_url").toString()
+        if (!webUrl.isNullOrEmpty()) {
+            binding.attachLinkCard.isVisible = true
+            binding.webUrlTV.text = webUrl
 
+        } else {
+            binding.attachLinkCard.isVisible = false
+        }
 
         CoroutineScope(Dispatchers.Default).launch {
             var messageDio: WhatsappDao = database.getWhatsappDao()
@@ -75,6 +83,7 @@ class WhatsAppAuto : AppCompatActivity() {
         val dailySms = sharedPref.getBoolean("whats_daily", true)
         val incoming = sharedPref.getBoolean("whats_incoming", true)
         val outgoing = sharedPref.getBoolean("whats_outgoing", true)
+        val attachLink = sharedPref.getBoolean("whats_link", true)
         val attachment = sharedPref.getBoolean("whats_attachment", true)
 
         when(sharedPref.getInt("whats",R.id.btnOff)){
@@ -86,6 +95,7 @@ class WhatsAppAuto : AppCompatActivity() {
         binding.dailyOneWhatsapp.isChecked = dailySms
         binding.incomingCallSwitch.isChecked = incoming
         binding.attachMediaFile.isChecked = attachment
+        binding.attachLinkSwitch.isChecked = attachLink
 //        binding.limitText.text = "$limit SMS"
 
 
@@ -111,6 +121,30 @@ class WhatsAppAuto : AppCompatActivity() {
                 .setType("*/*")
                 .setAction(Intent.ACTION_GET_CONTENT)
             startActivityForResult(Intent.createChooser(intent, "Select a file"), 111)
+        }
+
+        binding.attachLinkSwitch.setOnCheckedChangeListener { _, isChecked ->
+            with(sharedPref.edit()) {
+                putBoolean("whats_link", isChecked)
+                apply()
+            }
+            with(sharedPref.edit()){
+                putString("webUrl", webUrl)
+                apply()
+            }
+        }
+
+        binding.shareWebSite.setOnClickListener {
+            try {
+                val shareIntent = Intent(Intent.ACTION_SEND)
+                shareIntent.type = "text/plain"
+                shareIntent.putExtra(Intent.EXTRA_SUBJECT, "My Website")
+                var shareMessage = "\nVisit my website\n\n$webUrl"
+                shareIntent.putExtra(Intent.EXTRA_TEXT, shareMessage)
+                startActivity(Intent.createChooser(shareIntent, "choose one"))
+            } catch (e: Exception) {
+                //e.toString();
+            }
         }
     }
 

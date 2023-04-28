@@ -15,6 +15,9 @@ interface DaySMSCounterDao {
     @Query("SELECT * FROM day_sms WHERE day = :day")
     fun getDayCount(day: String?): DaySMSCounter
 
+    @Query("SELECT id FROM day_sms WHERE day = :day LIMIT 1")
+    fun getDayId(day: String): Int?
+
     @Query("Update day_sms set counter = counter+1 where day = :d")
     fun updateDayCount(d: String?)
 

@@ -20,7 +20,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.deecto.callsmsmarketing.databinding.ActivityDashboardBinding
 import com.deecto.callsmsmarketing.services.ManagePermissions
-import com.deecto.callsmsmarketing.services.WhatsappAccessibilityService
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
@@ -111,10 +110,12 @@ class Dashboard : AppCompatActivity() {
 
         binding.autoSMSCard.setOnClickListener {
             val intent = Intent(this, MainActivity::class.java)
+            intent.putExtra("web_url", web_url)
             startActivity(intent)
         }
         binding.cardAutoWhatsapp.setOnClickListener {
             val intent = Intent(this, WhatsAppAuto::class.java)
+            intent.putExtra("web_url", web_url)
             startActivity(intent)
         }
         binding.settingCard.setOnClickListener {
@@ -152,7 +153,10 @@ class Dashboard : AppCompatActivity() {
             val intent = Intent(this, ComingSoon::class.java)
             startActivity(intent)
         }
-
+        binding.accountCard.setOnClickListener {
+            val intent = Intent(this, Profile::class.java)
+            startActivity(intent)
+        }
 
     }
 

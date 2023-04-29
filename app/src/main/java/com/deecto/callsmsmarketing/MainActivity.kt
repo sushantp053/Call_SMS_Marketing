@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         database = MessageDatabase.getDatabase(this)
-        if (!webUrl.isNullOrEmpty()) {
+        if (webUrl.isNotEmpty() && webUrl.length > 5) {
             binding.attachLinkCard.isVisible = true
             binding.webUrlTV.text = webUrl
         } else {

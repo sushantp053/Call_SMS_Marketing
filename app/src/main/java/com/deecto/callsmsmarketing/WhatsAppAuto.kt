@@ -35,7 +35,7 @@ class WhatsAppAuto : AppCompatActivity() {
 
         database = MessageDatabase.getDatabase(this)
         val webUrl: String = intent.getStringExtra("web_url").toString()
-        if (!webUrl.isNullOrEmpty()) {
+        if (webUrl.isNotEmpty() && webUrl.length > 5) {
             binding.attachLinkCard.isVisible = true
             binding.webUrlTV.text = webUrl
 

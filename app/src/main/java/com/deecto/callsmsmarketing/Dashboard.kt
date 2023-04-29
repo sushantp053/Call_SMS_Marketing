@@ -41,6 +41,7 @@ class Dashboard : AppCompatActivity() {
     lateinit var web_url: String
     lateinit var web_user: String
     lateinit var web_pass: String
+    lateinit var web_login: String
 
 
     val list = listOf<String>(
@@ -123,14 +124,15 @@ class Dashboard : AppCompatActivity() {
             startActivity(intent)
         }
         binding.cardWebsite.setOnClickListener {
-            if (web_url.isNullOrEmpty()) {
-                showWebNotCreated()
-            } else {
+            if (web_url.isNotEmpty() && web_url.length > 5) {
                 val intent = Intent(this, WebSite::class.java)
                 intent.putExtra("web_url", web_url)
                 intent.putExtra("web_user", web_user)
                 intent.putExtra("web_pass", web_pass)
+                intent.putExtra("web_login", web_login)
                 startActivity(intent)
+            } else {
+                showWebNotCreated()
             }
         }
         binding.cardSocialMediaImages.setOnClickListener {
@@ -234,6 +236,7 @@ class Dashboard : AppCompatActivity() {
                         web_url = document.data!!["web_url"].toString()
                         web_user = document.data!!["web_user"].toString()
                         web_pass = document.data!!["web_pass"].toString()
+                        web_login = document.data!!["web_login"].toString()
                     }
                     mProgressDialog.dismiss()
                 } else {

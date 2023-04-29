@@ -17,8 +17,11 @@ class WebSite : AppCompatActivity() {
         val webUrl:String = intent.getStringExtra("web_url").toString()
         val webUser:String = intent.getStringExtra("web_user").toString()
         val webPass:String = intent.getStringExtra("web_pass").toString()
+        val webLogin:String = intent.getStringExtra("web_login").toString()
 
         binding.webUrlTV.text = webUrl
+        binding.userNameTV.text = webUser
+        binding.userPassTV.text = webPass
 
         binding.cardWebsiteVisit.setOnClickListener {
             val intent = Intent(this, OpenWebsite::class.java)
@@ -27,7 +30,7 @@ class WebSite : AppCompatActivity() {
         }
         binding.cardWebsiteEdit.setOnClickListener {
             val intent = Intent(this, WebLogin::class.java)
-            intent.putExtra("web_url", webUrl)
+            intent.putExtra("web_url", webLogin)
             intent.putExtra("web_user", webUser)
             intent.putExtra("web_pass", webPass)
             startActivity(intent)

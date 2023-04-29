@@ -1,6 +1,7 @@
 package com.deecto.callsmsmarketing.services
 
 import android.Manifest
+import android.app.PendingIntent
 import android.content.*
 import android.content.pm.PackageManager
 import android.database.Cursor
@@ -207,9 +208,7 @@ class CallReceiver : BroadcastReceiver() {
                                         "Your SMS sending limit has reached. ",
                                         Toast.LENGTH_SHORT
                                     ).show()
-
                                 }
-
                             }
                         }
                     }
@@ -219,7 +218,7 @@ class CallReceiver : BroadcastReceiver() {
                     CoroutineScope(Dispatchers.Default).launch {
                         val messageDio: MessageDao = database.getMessageDao()
                         val msg = messageDio.getDefaultMessage(true)
-                        val smsManager: SmsManager = SmsManager.getDefault()
+
                         // on below line we are sending text message.
 
                         val current = LocalDateTime.now()
@@ -232,10 +231,12 @@ class CallReceiver : BroadcastReceiver() {
                         try {
                             if (dayDetails.counter == null) {
                                 if (limit > 0) {
-                                    smsManager.sendTextMessage(
-                                        number, null, msg.message, null, null
-                                    )
-                                    changeCounter(context)
+//                                    smsManager.sendTextMessage(
+//                                        number, null, msg.message, null, null
+//                                    )
+//                                    changeCounter(context)
+                                    Log.e("Day Counter", "Not Found")
+                                    sendMultipartSMS(msg.message,number,context)
                                 } else {
                                     Toast.makeText(
                                         context.applicationContext,
@@ -246,11 +247,13 @@ class CallReceiver : BroadcastReceiver() {
                                 }
                             } else {
                                 if (limit > dayDetails.counter!!) {
-                                    smsManager.sendTextMessage(
-                                        number, null, msg.message, null, null
-                                    )
+//                                    smsManager.sendTextMessage(
+//                                        number, null, msg.message, null, null
+//                                    )
+//                                    changeCounter(context)
 
-                                    changeCounter(context)
+                                    Log.e("Day Limit", "Your are in Limit")
+                                    sendMultipartSMS(msg.message,number,context)
                                 } else {
                                     Toast.makeText(
                                         context.applicationContext,
@@ -260,12 +263,15 @@ class CallReceiver : BroadcastReceiver() {
                                 }
                             }
                         } catch (e: NullPointerException) {
-                            Log.e("Exception 263", e.toString())
+                            Log.e("Exception 264", e.toString())
                             if (limit > 0) {
-                                smsManager.sendTextMessage(
-                                    number, null, msg.message, null, null
-                                )
-                                changeCounter(context)
+//                                smsManager.sendTextMessage(
+//                                    number, null, msg.message, null, null
+//                                )
+//                                changeCounter(context)
+
+                                Log.e("Day Exception", "Found an exception")
+                                sendMultipartSMS(msg.message,number,context)
                             } else {
                                 Toast.makeText(
                                     context.applicationContext,
@@ -324,6 +330,28 @@ class CallReceiver : BroadcastReceiver() {
 
     }
 
+    private fun sendMultipartSMS(message : String?, number: String, context: Context?){
+        Log.e("Multipart Working", "In Function")
+        val smsManager: SmsManager = SmsManager.getDefault()
+        val messageParts = smsManager.divideMessage(message)
+        val numParts = messageParts.size
+
+        val sentIntents = mutableListOf<PendingIntent>()
+        val deliveryIntents = mutableListOf<PendingIntent>()
+
+        for (i in 0 until numParts) {
+            val sentIntent = PendingIntent.getBroadcast(context, 0, Intent("SMS_SENT"), 0)
+            val deliveryIntent = PendingIntent.getBroadcast(context, 0, Intent("SMS_DELIVERED"), 0)
+
+            sentIntents.add(sentIntent)
+            deliveryIntents.add(deliveryIntent)
+
+            smsManager.sendTextMessage(number, null, messageParts[i], sentIntent, deliveryIntent)
+            changeCounter(context)
+
+            Log.e("Multipart Working", "Message Send")
+        }
+    }
     private fun changeCounter(context: Context?) {
         database = MessageDatabase.getDatabase(context!!.applicationContext)
         val current = LocalDateTime.now()

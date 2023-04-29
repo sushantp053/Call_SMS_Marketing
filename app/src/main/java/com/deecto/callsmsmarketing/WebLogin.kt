@@ -13,6 +13,9 @@ class WebLogin : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_web_login)
 
+        val webUrl:String = intent.getStringExtra("web_url").toString()
+        val webUser:String = intent.getStringExtra("web_user").toString()
+        val webPass:String = intent.getStringExtra("web_pass").toString()
 
         val mProgressDialog = ProgressDialog(this)
         mProgressDialog.setTitle("Loading")
@@ -24,15 +27,15 @@ class WebLogin : AppCompatActivity() {
         myWebView.setWebViewClient(object : WebViewClient() {
             override fun onPageFinished(view: WebView, url: String) {
                 // Check here if url is equal to your site URL.
-                myWebView.getSettings().setJavaScriptEnabled(true);
-                myWebView.loadUrl("javascript:document.getElementsByName('user_id').value = 'sushantp053@gmail.com'")
-                myWebView.loadUrl("javascript:document.getElementsByName('user_password').value = '123456'")
-                myWebView.loadUrl("javascript:document.forms['login'].submit()")
+//                myWebView.getSettings().setJavaScriptEnabled(true);
+//                myWebView.loadUrl("javascript:document.getElementsByName('user_id').value = 'sushantp053@gmail.com'")
+//                myWebView.loadUrl("javascript:document.getElementsByName('user_password').value = '123456'")
+//                myWebView.loadUrl("javascript:document.forms['login'].submit()")
                 mProgressDialog.dismiss()
             }
         })
 
-        myWebView.loadUrl("https://vcard.macmads.com/panel/login/login.php")
+        myWebView.loadUrl(webUrl)
 
     }
 }

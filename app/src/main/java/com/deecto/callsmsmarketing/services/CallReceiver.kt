@@ -168,10 +168,12 @@ class CallReceiver : BroadcastReceiver() {
                             try {
                                 if (dayDetails.counter == null) {
                                     if (limit > 0) {
-                                        smsManager.sendTextMessage(
-                                            number, null, msg.message, null, null
-                                        )
-                                        changeCounter(context)
+//                                        smsManager.sendTextMessage(
+//                                            number, null, msg.message, null, null
+//                                        )
+//                                        changeCounter(context)
+
+                                        sendMultipartSMS(msg.message,number,context)
                                     } else {
                                         Toast.makeText(
                                             context.applicationContext,
@@ -182,10 +184,12 @@ class CallReceiver : BroadcastReceiver() {
                                     }
                                 } else {
                                     if (limit > dayDetails.counter!!) {
-                                        smsManager.sendTextMessage(
-                                            number, null, msg.message, null, null
-                                        )
-                                        changeCounter(context)
+//                                        smsManager.sendTextMessage(
+//                                            number, null, msg.message, null, null
+//                                        )
+//                                        changeCounter(context)
+
+                                        sendMultipartSMS(msg.message,number,context)
                                     } else {
                                         Toast.makeText(
                                             context.applicationContext,
@@ -198,10 +202,12 @@ class CallReceiver : BroadcastReceiver() {
                             } catch (e: NullPointerException) {
                                 Log.e("Exception 198", e.toString())
                                 if (limit > 0) {
-                                    smsManager.sendTextMessage(
-                                        number, null, msg.message, null, null
-                                    )
-                                    changeCounter(context)
+//                                    smsManager.sendTextMessage(
+//                                        number, null, msg.message, null, null
+//                                    )
+//                                    changeCounter(context)
+
+                                    sendMultipartSMS(msg.message,number,context)
                                 } else {
                                     Toast.makeText(
                                         context.applicationContext,

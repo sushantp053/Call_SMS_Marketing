@@ -1,14 +1,19 @@
 package com.deecto.callsmsmarketing
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.telephony.TelephonyManager
 import android.util.Log
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.view.isVisible
 import com.deecto.callsmsmarketing.database.DaySMSCounterDao
 import com.deecto.callsmsmarketing.database.MessageDao
@@ -33,6 +38,7 @@ class MainActivity : AppCompatActivity() {
     private val db = Firebase.firestore
     private var limit: Int = 100
 
+    @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -40,6 +46,37 @@ class MainActivity : AppCompatActivity() {
         val view = binding.root
         setContentView(view)
 
+        if (ActivityCompat.checkSelfPermission(
+                this, Manifest.permission.READ_SMS
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this, Manifest.permission.READ_PHONE_NUMBERS
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this, Manifest.permission.READ_PHONE_STATE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        } else {
+            val telephonyManager =
+                this.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+            val numberOfActiveSubscriptions = telephonyManager.phoneCount
+//            val subscriptionManager = SubscriptionManager.from(this@MainActivity)
+//            val subscriptions = subscriptionManager.activeSubscriptionInfoList
+            if (numberOfActiveSubscriptions >= 2) {
+                Log.e("Number of Sim", "Two in Numbers")
+                val operatorName = telephonyManager.simOperatorName
+                Log.e("Operator 1" , operatorName )
+                Log.e("Operator 2" , operatorName[1].toString() )
+                val phoneNumber = telephonyManager.getLine1Number()
+
+                Log.e("Phone 1" , phoneNumber.toString() )
+            } else if (numberOfActiveSubscriptions == 1) {
+                // There is only one active SIM card
+                Log.e("Number of Sim", "1 Sim available")
+            } else {
+                // No active SIM cards are found
+                Log.e("Number of Sim", "No SIM available")
+            }
+        }
         val webUrl: String = intent.getStringExtra("web_url").toString()
         auth = Firebase.auth
         if (auth.currentUser == null) {
@@ -128,7 +165,7 @@ class MainActivity : AppCompatActivity() {
                 putBoolean("sms_link", isChecked)
                 apply()
             }
-            with(sharedPref.edit()){
+            with(sharedPref.edit()) {
                 putString("webUrl", webUrl)
                 apply()
             }

@@ -173,7 +173,7 @@ class CallReceiver : BroadcastReceiver() {
 //                                        )
 //                                        changeCounter(context)
 
-                                        sendMultipartSMS(msg.message,number,context)
+                                        sendMultipartSMS(msg.message, number, context)
                                     } else {
                                         Toast.makeText(
                                             context.applicationContext,
@@ -189,7 +189,7 @@ class CallReceiver : BroadcastReceiver() {
 //                                        )
 //                                        changeCounter(context)
 
-                                        sendMultipartSMS(msg.message,number,context)
+                                        sendMultipartSMS(msg.message, number, context)
                                     } else {
                                         Toast.makeText(
                                             context.applicationContext,
@@ -207,7 +207,7 @@ class CallReceiver : BroadcastReceiver() {
 //                                    )
 //                                    changeCounter(context)
 
-                                    sendMultipartSMS(msg.message,number,context)
+                                    sendMultipartSMS(msg.message, number, context)
                                 } else {
                                     Toast.makeText(
                                         context.applicationContext,
@@ -242,7 +242,7 @@ class CallReceiver : BroadcastReceiver() {
 //                                    )
 //                                    changeCounter(context)
                                     Log.e("Day Counter", "Not Found")
-                                    sendMultipartSMS(msg.message,number,context)
+                                    sendMultipartSMS(msg.message, number, context)
                                 } else {
                                     Toast.makeText(
                                         context.applicationContext,
@@ -259,7 +259,7 @@ class CallReceiver : BroadcastReceiver() {
 //                                    changeCounter(context)
 
                                     Log.e("Day Limit", "Your are in Limit")
-                                    sendMultipartSMS(msg.message,number,context)
+                                    sendMultipartSMS(msg.message, number, context)
                                 } else {
                                     Toast.makeText(
                                         context.applicationContext,
@@ -277,7 +277,7 @@ class CallReceiver : BroadcastReceiver() {
 //                                changeCounter(context)
 
                                 Log.e("Day Exception", "Found an exception")
-                                sendMultipartSMS(msg.message,number,context)
+                                sendMultipartSMS(msg.message, number, context)
                             } else {
                                 Toast.makeText(
                                     context.applicationContext,
@@ -336,7 +336,7 @@ class CallReceiver : BroadcastReceiver() {
 
     }
 
-    private fun sendMultipartSMS(message : String?, number: String, context: Context?){
+    private fun sendMultipartSMS(message: String?, number: String, context: Context?) {
         Log.e("Multipart Working", "In Function")
         val smsManager: SmsManager = SmsManager.getDefault()
         val messageParts = smsManager.divideMessage(message)
@@ -346,8 +346,18 @@ class CallReceiver : BroadcastReceiver() {
         val deliveryIntents = mutableListOf<PendingIntent>()
 
         for (i in 0 until numParts) {
-            val sentIntent = PendingIntent.getBroadcast(context, 0, Intent("SMS_SENT"), 0)
-            val deliveryIntent = PendingIntent.getBroadcast(context, 0, Intent("SMS_DELIVERED"), 0)
+            val sentIntent = PendingIntent.getBroadcast(
+                context,
+                0,
+                Intent("SMS_SENT"),
+                PendingIntent.FLAG_IMMUTABLE
+            )
+            val deliveryIntent = PendingIntent.getBroadcast(
+                context,
+                0,
+                Intent("SMS_DELIVERED"),
+                PendingIntent.FLAG_IMMUTABLE
+            )
 
             sentIntents.add(sentIntent)
             deliveryIntents.add(deliveryIntent)
@@ -358,6 +368,7 @@ class CallReceiver : BroadcastReceiver() {
             Log.e("Multipart Working", "Message Send")
         }
     }
+
     private fun changeCounter(context: Context?) {
         database = MessageDatabase.getDatabase(context!!.applicationContext)
         val current = LocalDateTime.now()

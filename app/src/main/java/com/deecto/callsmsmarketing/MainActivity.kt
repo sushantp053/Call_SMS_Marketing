@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
 import android.util.Log
 import android.widget.EditText
@@ -62,13 +63,35 @@ class MainActivity : AppCompatActivity() {
 //            val subscriptionManager = SubscriptionManager.from(this@MainActivity)
 //            val subscriptions = subscriptionManager.activeSubscriptionInfoList
             if (numberOfActiveSubscriptions >= 2) {
-                Log.e("Number of Sim", "Two in Numbers")
-                val operatorName = telephonyManager.simOperatorName
-                Log.e("Operator 1" , operatorName )
-                Log.e("Operator 2" , operatorName[1].toString() )
-                val phoneNumber = telephonyManager.getLine1Number()
+//                Log.e("Number of Sim", "Two in Numbers")
+//                val operatorName = telephonyManager.simOperatorName
+//                Log.e("Operator 1" , operatorName.toString() )
+//                Log.e("Operator 2" , operatorName.toString())
+//                val phoneNumber = telephonyManager.getLine1Number()
+//                Log.e("Phone 1" , phoneNumber.toString() )
 
-                Log.e("Phone 1" , phoneNumber.toString() )
+                val subscriptionManager = getSystemService(SubscriptionManager::class.java)
+                val telephonyManager = getSystemService(TelephonyManager::class.java)
+
+                subscriptionManager?.let {
+                    val activeSubscriptionInfoList = it.activeSubscriptionInfoList
+
+                    activeSubscriptionInfoList?.let { activeList ->
+                        for (subscriptionInfo in activeList) {
+                            val subId = subscriptionInfo.subscriptionId
+//                            val operatorName = telephonyManager?.getSimOperatorName()
+//                            val phoneNumber = telephonyManager?.getMeid(1)
+//                            Log.e("Error", subId.toString() + phoneNumber)
+                            println("Operator Name: ${subscriptionInfo.carrierName}")
+                            println("Phone Number: ${subscriptionInfo}")
+                            if (subscriptionInfo.simSlotIndex == 0){
+                                binding.sim1Text.text = subscriptionInfo.carrierName
+                            }else{
+                                binding.sim2Text.text = subscriptionInfo.carrierName
+                            }
+                        }
+                    }
+                }
             } else if (numberOfActiveSubscriptions == 1) {
                 // There is only one active SIM card
                 Log.e("Number of Sim", "1 Sim available")
